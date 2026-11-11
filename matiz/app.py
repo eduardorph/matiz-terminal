@@ -15,6 +15,7 @@ gi.require_version("Vte", "3.91")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from . import procinfo, session  # noqa: E402
+from .filetree import FileTree  # noqa: E402
 from .pane import Pane  # noqa: E402
 from .tab import Tab, mix  # noqa: E402
 
@@ -90,6 +91,10 @@ class MatizWindow(Adw.ApplicationWindow):
         split_btn = Gtk.Button(icon_name="view-dual-symbolic", tooltip_text="Dividir lado a lado (Alt+Shift++)")
         split_btn.connect("clicked", lambda *_: self._split(self.pane(), True))
         header.pack_start(split_btn)
+        self.tree_btn = Gtk.ToggleButton(icon_name="sidebar-show-symbolic",
+                                         tooltip_text="Árvore de arquivos (Ctrl+Shift+B)")
+        self.tree_btn.connect("toggled", lambda b: self._show_tree(b.get_active()))
+        header.pack_start(self.tree_btn)
         menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic", tooltip_text="Menu (F10)",
                                   menu_model=self._build_main_menu(), primary=True)
         menu_btn.connect("notify::active", lambda b, *_: b.get_active() and self._fill_open_with())
@@ -105,7 +110,14 @@ class MatizWindow(Adw.ApplicationWindow):
         tv = Adw.ToolbarView()
         tv.add_top_bar(header)
         tv.add_top_bar(self.tabbar)
-        tv.set_content(self.toasts)
+        self.tree = FileTree(self)
+        self.tree.set_visible(False)
+        self.split = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL, position=260,
+                               start_child=self.tree, end_child=self.toasts)
+        self.split.set_shrink_start_child(False)
+        self.split.set_resize_start_child(False)
+        self.split.set_shrink_end_child(False)
+        tv.set_content(self.split)
         tv.add_bottom_bar(self.searchbar)
         self.set_content(tv)
 
@@ -173,6 +185,9 @@ class MatizWindow(Adw.ApplicationWindow):
         top = Gio.Menu()
         it = Gio.MenuItem.new("Nova aba", "aba.nova")
         it.set_attribute_value("accel", GLib.Variant.new_string("<Control><Shift>t"))
+        top.append_item(it)
+        it = Gio.MenuItem.new("Árvore de arquivos", "aba.arvore")
+        it.set_attribute_value("accel", GLib.Variant.new_string("<Control><Shift>b"))
         top.append_item(it)
         menu.append_section(None, top)
         tab_menu = self._build_tab_menu()
@@ -255,6 +270,7 @@ class MatizWindow(Adw.ApplicationWindow):
         add("limpar", lambda *_: self._clear(self._target_pane()))
         add("salvar-historico", lambda *_: self._save_history(self._target_pane()))
         add("nova", lambda *_: self.new_tab())
+        add("arvore", lambda *_: self.tree_btn.set_active(not self.tree_btn.get_active()))
         add("copiar", lambda *_: (p := self._target_pane()) and p.term.copy_clipboard_format(_vte().Format.TEXT))
         add("colar", lambda *_: (p := self._target_pane()) and p.term.paste_clipboard())
         add("atalhos", lambda *_: self._show_shortcuts())
@@ -305,6 +321,7 @@ class MatizWindow(Adw.ApplicationWindow):
         sc("<Alt>Up", lambda: cur() and cur().focus_dir(0, -1))
         sc("<Alt>Down", lambda: cur() and cur().focus_dir(0, +1))
         sc("<Control>question", lambda: self._show_shortcuts())
+        sc("<Control><Shift>b", lambda: self.tree_btn.set_active(not self.tree_btn.get_active()))
         sc("<Control><Shift>question", lambda: self._show_shortcuts())
         sc("F1", lambda: self._show_shortcuts())
         self.add_controller(ctrl)
@@ -449,6 +466,7 @@ class MatizWindow(Adw.ApplicationWindow):
                 ("Ir para o painel vizinho", "<Alt>Left <Alt>Right <Alt>Up <Alt>Down"),
             ]),
             ("Pasta e histórico", [
+                ("Mostrar/esconder árvore de arquivos", "<Control><Shift>b"),
                 ("Abrir pasta no gerenciador de arquivos", "<Control><Shift>e"),
                 ("Copiar caminho da pasta", "<Control><Shift>y"),
                 ("Buscar no terminal", "<Control><Shift>f"),
@@ -472,6 +490,13 @@ class MatizWindow(Adw.ApplicationWindow):
         extra.add(Adw.ShortcutsItem(title="Menu da aba: botão direito no título da aba", accelerator=""))
         dlg.add(extra)
         dlg.present(self)
+
+    def _show_tree(self, on):
+        self.tree.set_visible(on)
+        if on:
+            self.tree.root = None if self.tree.following else self.tree.root
+            self.tree.follow(self.pane())
+        self.schedule_save()
 
     def run_in_new_tab(self, argv):
         """Abre uma aba na pasta pessoal e executa o comando (ex.: login)."""
@@ -820,6 +845,8 @@ class MatizWindow(Adw.ApplicationWindow):
             self.wtitle.set_title(f"Matiz — {tab.display_title()}" if tab.custom_title or tab.fg_name else "Matiz")
             self.wtitle.set_subtitle(f"{path}  ·  {n} aba{'s' if n != 1 else ''}{extra}")
             self.set_title(f"{tab.display_title()} — Matiz")
+        if tab:
+            self.tree.follow(tab.active)
         color = tab.color if tab else None
         if color:
             head = mix("#2b2f38", color, 0.42)
@@ -839,6 +866,9 @@ class MatizWindow(Adw.ApplicationWindow):
         self.set_default_size(int(win.get("width", 1100)), int(win.get("height", 720)))
         if win.get("maximized"):
             self.maximize()
+        self.split.set_position(int(win.get("arvore_largura", 260)))
+        if win.get("arvore"):
+            self.tree_btn.set_active(True)
         tabs = [t for t in state.get("tabs", []) if isinstance(t, dict)]
         for t in tabs:
             self.new_tab(state=t, select=False)
@@ -865,6 +895,8 @@ class MatizWindow(Adw.ApplicationWindow):
                 "width": self.get_width() or 1100,
                 "height": self.get_height() or 720,
                 "maximized": self.is_maximized(),
+                "arvore": self.tree.get_visible(),
+                "arvore_largura": self.split.get_position(),
             },
             "active": active,
             "tabs": [dict(t.to_state(), pinned=bool(t.page and t.page.get_pinned())) for t in tabs],

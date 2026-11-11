@@ -28,6 +28,9 @@ e Codex.
 - **Widget de uso de IA** na barra superior: sessões abertas, login, mensagens e tokens
   (5 h / hoje / 7 dias), custo quando a ferramenta registra, gráfico das últimas 24 h e
   **percentual dos limites do plano** (5 h / semanal). Tudo é lido de arquivos locais.
+- **Árvore de arquivos** (`Ctrl+Shift+B`) na lateral, acompanhando a pasta do painel ativo:
+  duplo clique abre o arquivo no editor; o botão direito oferece `cd`, inserir caminho no
+  terminal, nova aba na pasta, copiar caminho e mais.
 - Busca no histórico, salvar histórico em arquivo, abrir a pasta atual em outro aplicativo,
   abas fixadas, menu com todos os atalhos (`Ctrl+?`).
 
@@ -94,6 +97,7 @@ terminal. `Ctrl+?` ou `F1` mostram a lista completa.
 | Cor da aba / sem cor | `Ctrl+Alt+1…8` / `Ctrl+Alt+0` |
 | Renomear aba | `Ctrl+Shift+R` |
 | Copiar / colar | `Ctrl+Shift+C` / `Ctrl+Shift+V` |
+| Árvore de arquivos da pasta atual | `Ctrl+Shift+B` |
 | Abrir a pasta no gerenciador de arquivos | `Ctrl+Shift+E` |
 | Copiar caminho da pasta | `Ctrl+Shift+Y` |
 | Buscar no terminal | `Ctrl+Shift+F` (Enter ↑, Shift+Enter ↓, Esc fecha) |
@@ -168,6 +172,7 @@ Matiz (janela GTK)  ──socket Unix──▶  matiz-daemon  ──▶  um PTY 
 | `matiz/protocol.py` | Protocolo binário simples entre janela e daemon |
 | `matiz/procinfo.py` | Leitura de `/proc`: processo em primeiro plano, pasta, como retomar cada programa |
 | `matiz/session.py` | Estado em disco (gravação atômica) e configuração |
+| `matiz/filetree.py` | Árvore de arquivos lateral |
 | `matiz/usage.py`, `matiz/usage_ui.py` | Coleta e exibição do uso de IA |
 | `matiz/claude_limits.py`, `bin/matiz-statusline` | Limites do plano do Claude via `statusLine` |
 
