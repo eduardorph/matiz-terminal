@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# Intermediário da barra de status do Claude Code: anota os limites do plano
+# para o widget do Matiz e repassa a entrada para a barra de status original.
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from matiz.claude_limits import statusline_main  # noqa: E402
+
+sys.exit(statusline_main())

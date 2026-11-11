@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Editores e sistema
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Estado/configuração locais (por precaução — o Matiz grava fora do repositório)
+session.json
+scrollback/
+claude-limits.json
+config.json
+*.log
+.env
+.env.*
