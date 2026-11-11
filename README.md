@@ -198,3 +198,7 @@ python3 -m unittest discover -s tests
 
 Os testes do daemon e da detecção de processos criam processos de verdade e usam diretórios
 temporários; nenhum toca na configuração do usuário.
+
+## Licença
+
+[MIT](LICENSE) © 2026 Eduardo Freitas
