@@ -1,4 +1,4 @@
-"""Conexão com o matiz-daemon (inicia o daemon se não estiver rodando)."""
+"""Connection to matiz-daemon (starts the daemon if it is not running)."""
 from __future__ import annotations
 
 import os
@@ -29,7 +29,7 @@ def start_daemon():
     env = dict(os.environ)
     env["PYTHONPATH"] = PROJECT_ROOT + (":" + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     log = open(rd / "daemon.log", "ab")
-    # setsid -f: o daemon fica independente da janela (sobrevive ao fechá-la)
+    # setsid -f: the daemon is independent from the window (survives closing it)
     subprocess.run(
         ["setsid", "-f", sys.executable, "-m", "matiz.daemon"],
         cwd="/", env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log, check=False,
@@ -48,4 +48,4 @@ def connect(timeout: float = 4.0) -> socket.socket:
         if s:
             return s
         time.sleep(0.05)
-    raise OSError("não foi possível conectar ao matiz-daemon")
+    raise OSError("could not connect to matiz-daemon")

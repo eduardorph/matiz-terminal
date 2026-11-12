@@ -1,18 +1,18 @@
-"""Protocolo entre o Matiz e o matiz-daemon.
+"""Protocol between Matiz and matiz-daemon.
 
-Cada mensagem: 1 byte de tipo + 4 bytes de tamanho (big-endian) + conteúdo.
+Each message: 1 type byte + 4 length bytes (big-endian) + payload.
 
-Cliente → daemon
+Client → daemon
   H  JSON  {"op": "open", "id", "cwd", "argv", "env", "rows", "cols", "proto"}
-  I  bytes entrada do teclado
+  I  bytes keyboard input
   R  JSON  {"rows", "cols"}
-  K  —     encerrar a sessão (aba fechada explicitamente)
-  C  —     esquecer a saída guardada (tela limpa pelo usuário)
+  K  —     end the session (tab/pane explicitly closed)
+  C  —     forget the buffered output (screen cleared by the user)
 
-Daemon → cliente
-  S  JSON  {"id", "pid", "attached": bool}   sessão pronta (reconectada ou criada)
-  O  bytes saída do terminal
-  X  JSON  {"status"}                         a shell terminou
+Daemon → client
+  S  JSON  {"id", "pid", "attached": bool}   session ready (reattached or created)
+  O  bytes terminal output
+  X  JSON  {"status"}                         the shell exited
   E  JSON  {"error"}
 """
 from __future__ import annotations
@@ -45,7 +45,7 @@ def jframe(kind: bytes, obj) -> bytes:
 
 
 class Decoder:
-    """Acumula bytes e devolve mensagens completas (tipo, conteúdo)."""
+    """Accumulates bytes and returns complete messages (type, payload)."""
 
     def __init__(self):
         self.buf = bytearray()
@@ -56,7 +56,7 @@ class Decoder:
         while len(self.buf) >= HEADER.size:
             kind, n = HEADER.unpack_from(self.buf)
             if n > MAX_FRAME:
-                raise ValueError("mensagem grande demais")
+                raise ValueError("message too large")
             if len(self.buf) < HEADER.size + n:
                 break
             payload = bytes(self.buf[HEADER.size : HEADER.size + n])

@@ -1,4 +1,4 @@
-"""Janela, abas, painéis, menus, notificações e o ciclo salvar/restaurar."""
+"""Window, tabs, panes, menus, notifications and the save/restore cycle."""
 from __future__ import annotations
 
 import os
@@ -15,32 +15,34 @@ gi.require_version("Vte", "3.91")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from . import procinfo, session  # noqa: E402
+from .i18n import N_, _, ngettext, setup  # noqa: E402
 from .filetree import FileTree  # noqa: E402
 from .pane import Pane  # noqa: E402
 from .tab import Tab, mix  # noqa: E402
 
 APP_ID = "dev.matiz.Terminal"
-PROBE_MS = 2000          # sondagem de processos + gravação do estado
-SCROLLBACK_EVERY = 8     # grava histórico a cada N sondagens (~16 s)
-CLOSE_DELAY_MS = 1200    # espera antes de fechar painel cuja shell saiu
+PROBE_MS = 2000          # process probing + state saving
+SCROLLBACK_EVERY = 8     # save scrollback every N probes (~16 s)
+CLOSE_DELAY_MS = 1200    # delay before closing a pane whose shell exited
 
+# (emoji, color name, hex). Names are translated where displayed.
 PRESETS = [
-    ("🔴  Vermelho", "#e5484d"),
-    ("🟠  Laranja", "#f76b15"),
-    ("🟡  Amarelo", "#e2b93d"),
-    ("🟢  Verde", "#46a758"),
-    ("🔵  Azul", "#3e8ed0"),
-    ("🟣  Roxo", "#8e4ec6"),
-    ("🩷  Rosa", "#d6409f"),
-    ("⚪  Cinza", "#8b8d98"),
+    ("🔴", N_("Red"), "#e5484d"),
+    ("🟠", N_("Orange"), "#f76b15"),
+    ("🟡", N_("Yellow"), "#e2b93d"),
+    ("🟢", N_("Green"), "#46a758"),
+    ("🔵", N_("Blue"), "#3e8ed0"),
+    ("🟣", N_("Purple"), "#8e4ec6"),
+    ("🩷", N_("Pink"), "#d6409f"),
+    ("⚪", N_("Gray"), "#8b8d98"),
 ]
 
 STATIC_CSS = """
 .matiz-pane { border: 1px solid transparent; }
-.matiz-pane.matiz-pane-ativo { border-color: alpha(#88c0d0, 0.75); }
+.matiz-pane.matiz-pane-active { border-color: alpha(#88c0d0, 0.75); }
 paned.horizontal > separator, paned.vertical > separator { background-color: #3b4252; }
-button.matiz-fechar-painel { opacity: 0.45; min-width: 24px; min-height: 24px; padding: 2px; }
-button.matiz-fechar-painel:hover { opacity: 1; background-color: alpha(#bf616a, 0.85); }
+button.matiz-close-pane { opacity: 0.45; min-width: 24px; min-height: 24px; padding: 2px; }
+button.matiz-close-pane:hover { opacity: 1; background-color: alpha(#bf616a, 0.85); }
 """
 
 
@@ -49,14 +51,16 @@ class MatizWindow(Adw.ApplicationWindow):
         super().__init__(application=app, title="Matiz")
         self.add_css_class("matiz-window")
         self.config = session.load_config()
+        if self.config.get("language"):
+            setup(str(self.config["language"]))
         self.rerun = procinfo.DEFAULT_RERUN + [
-            r for r in self.config.get("reexecutar_extra", []) if isinstance(r, list) and r
+            r for r in self.config.get("rerun_extra", []) if isinstance(r, list) and r
         ]
-        self.max_lines = int(self.config.get("linhas_historico_salvas", 3000))
-        self.notify_after = float(self.config.get("notificar_apos_segundos", 10))
-        # Processos sobrevivem ao fechar a janela (matiz-daemon). Desative com
-        # "persistir_processos": false na config ou MATIZ_NO_DAEMON=1.
-        self.use_daemon = bool(self.config.get("persistir_processos", True)) and not os.environ.get("MATIZ_NO_DAEMON")
+        self.max_lines = int(self.config.get("saved_scrollback_lines", 3000))
+        self.notify_after = float(self.config.get("notify_after_seconds", 10))
+        # Processes survive closing the window (matiz-daemon). Disable with
+        # "persist_processes": false in the config or MATIZ_NO_DAEMON=1.
+        self.use_daemon = bool(self.config.get("persist_processes", True)) and not os.environ.get("MATIZ_NO_DAEMON")
         self.quitting = False
         self._menu_page = None
         self._last_state_text = None
@@ -75,8 +79,8 @@ class MatizWindow(Adw.ApplicationWindow):
         self.view.connect("close-page", self._on_close_page)
         self.view.connect("notify::selected-page", self._on_selected)
         self.view.connect("setup-menu", self._on_setup_menu)
-        self.view.connect("create-window", lambda *_: None)  # sem arrastar p/ nova janela
-        self.open_with_menu = Gio.Menu()  # compartilhado; preenchido ao abrir os menus
+        self.view.connect("create-window", lambda *_: None)  # no dragging tabs into a new window
+        self.open_with_menu = Gio.Menu()  # shared; filled when menus open
         self._fill_open_with()
         self.view.set_menu_model(self._build_tab_menu())
         self.term_menu = self._build_term_menu()
@@ -85,21 +89,21 @@ class MatizWindow(Adw.ApplicationWindow):
         header = Adw.HeaderBar()
         self.wtitle = Adw.WindowTitle(title="Matiz")
         header.set_title_widget(self.wtitle)
-        new_btn = Gtk.Button(icon_name="tab-new-symbolic", tooltip_text="Nova aba (Ctrl+Shift+T)")
+        new_btn = Gtk.Button(icon_name="tab-new-symbolic", tooltip_text=_("New tab (Ctrl+Shift+T)"))
         new_btn.connect("clicked", lambda *_: self.new_tab())
         header.pack_start(new_btn)
-        split_btn = Gtk.Button(icon_name="view-dual-symbolic", tooltip_text="Dividir lado a lado (Alt+Shift++)")
+        split_btn = Gtk.Button(icon_name="view-dual-symbolic", tooltip_text=_("Split side by side (Alt+Shift++)"))
         split_btn.connect("clicked", lambda *_: self._split(self.pane(), True))
         header.pack_start(split_btn)
         self.tree_btn = Gtk.ToggleButton(icon_name="sidebar-show-symbolic",
-                                         tooltip_text="Árvore de arquivos (Ctrl+Shift+B)")
+                                         tooltip_text=_("File tree (Ctrl+Shift+B)"))
         self.tree_btn.connect("toggled", lambda b: self._show_tree(b.get_active()))
         header.pack_start(self.tree_btn)
-        menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic", tooltip_text="Menu (F10)",
+        menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic", tooltip_text=_("Menu (F10)"),
                                   menu_model=self._build_main_menu(), primary=True)
         menu_btn.connect("notify::active", lambda b, *_: b.get_active() and self._fill_open_with())
         header.pack_end(menu_btn)
-        if self.config.get("widget_uso", True):
+        if self.config.get("usage_widget", True):
             from .usage_ui import UsageButton
             self.usage_btn = UsageButton(run_in_new_tab=self.run_in_new_tab)
             header.pack_end(self.usage_btn)
@@ -128,7 +132,7 @@ class MatizWindow(Adw.ApplicationWindow):
         GLib.timeout_add(PROBE_MS, self._on_tick)
         GLib.timeout_add(150, self._check_sizes)
 
-    # ================= menus e ações =================
+    # ================= menus and actions =================
     def _build_tab_menu(self) -> Gio.Menu:
         def item(label, action, accel=None, target=None):
             it = Gio.MenuItem.new(label, None)
@@ -141,52 +145,52 @@ class MatizWindow(Adw.ApplicationWindow):
             return it
 
         menu = Gio.Menu()
-        cores = Gio.Menu()
+        colors = Gio.Menu()
         swatches = Gio.Menu()
-        for i, (label, hexstr) in enumerate(PRESETS, 1):
-            swatches.append_item(item(label, "aba.cor", f"<Control><Alt>{i}", hexstr))
-        cores.append_section(None, swatches)
+        for i, (emoji, name, hexstr) in enumerate(PRESETS, 1):
+            swatches.append_item(item(f"{emoji}  {_(name)}", "tab.color", f"<Control><Alt>{i}", hexstr))
+        colors.append_section(None, swatches)
         extra = Gio.Menu()
-        extra.append_item(item("Personalizada…", "aba.cor-personalizada"))
-        extra.append_item(item("Sem cor", "aba.sem-cor", "<Control><Alt>0"))
-        cores.append_section(None, extra)
+        extra.append_item(item(_("Custom…"), "tab.custom-color"))
+        extra.append_item(item(_("No color"), "tab.no-color", "<Control><Alt>0"))
+        colors.append_section(None, extra)
         s1 = Gio.Menu()
-        s1.append_submenu("Cor", cores)
-        s1.append_item(item("Renomear…", "aba.renomear", "<Control><Shift>r"))
-        s1.append_item(item("Fixar / desafixar aba", "aba.fixar"))
+        s1.append_submenu(_("Color"), colors)
+        s1.append_item(item(_("Rename…"), "tab.rename", "<Control><Shift>r"))
+        s1.append_item(item(_("Pin / unpin tab"), "tab.pin"))
         menu.append_section(None, s1)
 
-        paineis = Gio.Menu()
-        paineis.append_item(item("Dividir lado a lado", "aba.dividir-h", "<Alt><Shift>plus"))
-        paineis.append_item(item("Dividir em cima / embaixo", "aba.dividir-v", "<Alt><Shift>underscore"))
-        paineis.append_item(item("Fechar painel", "aba.fechar-painel"))
-        menu.append_section(None, paineis)
+        panes = Gio.Menu()
+        panes.append_item(item(_("Split side by side"), "tab.split-h", "<Alt><Shift>plus"))
+        panes.append_item(item(_("Split top / bottom"), "tab.split-v", "<Alt><Shift>underscore"))
+        panes.append_item(item(_("Close pane"), "tab.close-pane"))
+        menu.append_section(None, panes)
 
-        pasta = Gio.Menu()
-        pasta.append_submenu("Abrir pasta com", self.open_with_menu)
-        pasta.append_item(item("Copiar caminho da pasta", "aba.copiar-caminho", "<Control><Shift>y"))
-        pasta.append_item(item("Nova aba nesta pasta", "aba.duplicar", "<Control><Shift>d"))
-        menu.append_section(None, pasta)
+        folder = Gio.Menu()
+        folder.append_submenu(_("Open folder with"), self.open_with_menu)
+        folder.append_item(item(_("Copy folder path"), "tab.copy-path", "<Control><Shift>y"))
+        folder.append_item(item(_("New tab in this folder"), "tab.new-tab-here", "<Control><Shift>d"))
+        menu.append_section(None, folder)
 
         hist = Gio.Menu()
-        hist.append_item(item("Buscar…", "aba.buscar", "<Control><Shift>f"))
-        hist.append_item(item("Salvar histórico em arquivo…", "aba.salvar-historico", "<Control><Shift>s"))
-        hist.append_item(item("Limpar tela e histórico", "aba.limpar", "<Control><Shift>k"))
+        hist.append_item(item(_("Search…"), "tab.search", "<Control><Shift>f"))
+        hist.append_item(item(_("Save scrollback to file…"), "tab.save-history", "<Control><Shift>s"))
+        hist.append_item(item(_("Clear screen and scrollback"), "tab.clear", "<Control><Shift>k"))
         menu.append_section(None, hist)
 
-        fim = Gio.Menu()
-        fim.append_item(item("Fechar outras abas", "aba.fechar-outras"))
-        fim.append_item(item("Fechar aba", "aba.fechar"))
-        menu.append_section(None, fim)
+        end = Gio.Menu()
+        end.append_item(item(_("Close other tabs"), "tab.close-others"))
+        end.append_item(item(_("Close tab"), "tab.close"))
+        menu.append_section(None, end)
         return menu
 
     def _build_main_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
         top = Gio.Menu()
-        it = Gio.MenuItem.new("Nova aba", "aba.nova")
+        it = Gio.MenuItem.new(_("New tab"), "tab.new")
         it.set_attribute_value("accel", GLib.Variant.new_string("<Control><Shift>t"))
         top.append_item(it)
-        it = Gio.MenuItem.new("Árvore de arquivos", "aba.arvore")
+        it = Gio.MenuItem.new(_("File tree"), "tab.file-tree")
         it.set_attribute_value("accel", GLib.Variant.new_string("<Control><Shift>b"))
         top.append_item(it)
         menu.append_section(None, top)
@@ -195,18 +199,18 @@ class MatizWindow(Adw.ApplicationWindow):
             link = tab_menu.get_item_link(i, Gio.MENU_LINK_SECTION)
             if link is not None:
                 menu.append_section(None, link)
-        ajuda = Gio.Menu()
-        it = Gio.MenuItem.new("Atalhos de teclado", "aba.atalhos")
+        help_ = Gio.Menu()
+        it = Gio.MenuItem.new(_("Keyboard shortcuts"), "tab.shortcuts")
         it.set_attribute_value("accel", GLib.Variant.new_string("<Control>question"))
-        ajuda.append_item(it)
-        menu.append_section(None, ajuda)
+        help_.append_item(it)
+        menu.append_section(None, help_)
         return menu
 
     def _build_term_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
         clip = Gio.Menu()
-        for label, action, accel in (("Copiar", "aba.copiar", "<Control><Shift>c"),
-                                     ("Colar", "aba.colar", "<Control><Shift>v")):
+        for label, action, accel in ((_("Copy"), "tab.copy", "<Control><Shift>c"),
+                                     (_("Paste"), "tab.paste", "<Control><Shift>v")):
             it = Gio.MenuItem.new(label, action)
             it.set_attribute_value("accel", GLib.Variant.new_string(accel))
             clip.append_item(it)
@@ -223,14 +227,14 @@ class MatizWindow(Adw.ApplicationWindow):
         apps = folder_apps()
         for i, app in enumerate(apps):
             it = Gio.MenuItem.new(app.get_name() + ("    Ctrl+Shift+E" if i == 0 else ""), None)
-            it.set_action_and_target_value("aba.abrir-com", GLib.Variant.new_string(app.get_id()))
+            it.set_action_and_target_value("tab.open-with", GLib.Variant.new_string(app.get_id()))
             self.open_with_menu.append_item(it)
-        outro = Gio.Menu()
-        outro.append("Outro aplicativo…", "aba.abrir-com-outro")
-        self.open_with_menu.append_section(None, outro)
+        other = Gio.Menu()
+        other.append(_("Other application…"), "tab.open-with-other")
+        self.open_with_menu.append_section(None, other)
 
     def _on_setup_menu(self, _view, page):
-        # page é a aba clicada (None quando o menu fecha).
+        # page is the clicked tab (None when the menu closes).
         if page is not None:
             self._menu_page = page
             self._fill_open_with()
@@ -252,29 +256,29 @@ class MatizWindow(Adw.ApplicationWindow):
             a.connect("activate", cb)
             group.add_action(a)
 
-        add("cor", lambda _a, v: self._set_color(self._target_tab(), v.get_string()), "s")
-        add("sem-cor", lambda *_: self._set_color(self._target_tab(), None))
-        add("cor-personalizada", lambda *_: self._pick_color(self._target_tab()))
-        add("renomear", lambda *_: self._rename(self._target_tab()))
-        add("duplicar", lambda *_: self._duplicate(self._target_pane()))
-        add("fechar", lambda *_: self._close_tab(self._target_tab()))
-        add("fechar-outras", lambda *_: self._close_others(self._target_tab()))
-        add("fixar", lambda *_: self._toggle_pin(self._target_tab()))
-        add("dividir-h", lambda *_: self._split(self._target_pane(), True))
-        add("dividir-v", lambda *_: self._split(self._target_pane(), False))
-        add("fechar-painel", lambda *_: self._close_pane(self._target_pane()))
-        add("abrir-com", lambda _a, v: self._open_with(self._target_pane(), v.get_string()), "s")
-        add("abrir-com-outro", lambda *_: self._open_with_other(self._target_pane()))
-        add("copiar-caminho", lambda *_: self._copy_path(self._target_pane()))
-        add("buscar", lambda *_: self._open_search(self._target_tab()))
-        add("limpar", lambda *_: self._clear(self._target_pane()))
-        add("salvar-historico", lambda *_: self._save_history(self._target_pane()))
-        add("nova", lambda *_: self.new_tab())
-        add("arvore", lambda *_: self.tree_btn.set_active(not self.tree_btn.get_active()))
-        add("copiar", lambda *_: (p := self._target_pane()) and p.term.copy_clipboard_format(_vte().Format.TEXT))
-        add("colar", lambda *_: (p := self._target_pane()) and p.term.paste_clipboard())
-        add("atalhos", lambda *_: self._show_shortcuts())
-        self.insert_action_group("aba", group)
+        add("color", lambda _a, v: self._set_color(self._target_tab(), v.get_string()), "s")
+        add("no-color", lambda *_: self._set_color(self._target_tab(), None))
+        add("custom-color", lambda *_: self._pick_color(self._target_tab()))
+        add("rename", lambda *_: self._rename(self._target_tab()))
+        add("new-tab-here", lambda *_: self._duplicate(self._target_pane()))
+        add("close", lambda *_: self._close_tab(self._target_tab()))
+        add("close-others", lambda *_: self._close_others(self._target_tab()))
+        add("pin", lambda *_: self._toggle_pin(self._target_tab()))
+        add("split-h", lambda *_: self._split(self._target_pane(), True))
+        add("split-v", lambda *_: self._split(self._target_pane(), False))
+        add("close-pane", lambda *_: self._close_pane(self._target_pane()))
+        add("open-with", lambda _a, v: self._open_with(self._target_pane(), v.get_string()), "s")
+        add("open-with-other", lambda *_: self._open_with_other(self._target_pane()))
+        add("copy-path", lambda *_: self._copy_path(self._target_pane()))
+        add("search", lambda *_: self._open_search(self._target_tab()))
+        add("clear", lambda *_: self._clear(self._target_pane()))
+        add("save-history", lambda *_: self._save_history(self._target_pane()))
+        add("new", lambda *_: self.new_tab())
+        add("file-tree", lambda *_: self.tree_btn.set_active(not self.tree_btn.get_active()))
+        add("copy", lambda *_: (p := self._target_pane()) and p.term.copy_clipboard_format(_vte().Format.TEXT))
+        add("paste", lambda *_: (p := self._target_pane()) and p.term.paste_clipboard())
+        add("shortcuts", lambda *_: self._show_shortcuts())
+        self.insert_action_group("tab", group)
 
     def _install_shortcuts(self):
         ctrl = Gtk.ShortcutController(propagation_phase=Gtk.PropagationPhase.CAPTURE)
@@ -302,7 +306,7 @@ class MatizWindow(Adw.ApplicationWindow):
         sc("<Control><Shift>r", lambda: self._rename(cur()))
         for i in range(1, 10):
             sc(f"<Alt>{i}", lambda i=i: self._select_index(i - 1))
-        for i, (_label, hexstr) in enumerate(PRESETS, 1):
+        for i, (_emoji, _name, hexstr) in enumerate(PRESETS, 1):
             sc(f"<Control><Alt>{i}", lambda c=hexstr: self._set_color(cur(), c))
         sc("<Control><Alt>0", lambda: self._set_color(cur(), None))
         sc("<Control><Shift>e", lambda: self._open_with(pane(), None))
@@ -311,7 +315,7 @@ class MatizWindow(Adw.ApplicationWindow):
         sc("<Control><Shift>f", lambda: self._open_search(cur()))
         sc("<Control><Shift>k", lambda: self._clear(pane()))
         sc("<Control><Shift>s", lambda: self._save_history(pane()))
-        # painéis
+        # panes
         for t in ("<Alt><Shift>plus", "<Alt><Shift>equal", "<Alt><Shift>KP_Add"):
             sc(t, lambda: self._split(pane(), True))
         for t in ("<Alt><Shift>underscore", "<Alt><Shift>minus", "<Alt><Shift>KP_Subtract"):
@@ -326,7 +330,7 @@ class MatizWindow(Adw.ApplicationWindow):
         sc("F1", lambda: self._show_shortcuts())
         self.add_controller(ctrl)
 
-    # ================= operações de aba =================
+    # ================= tab operations =================
     def current_tab(self) -> Tab | None:
         page = self.view.get_selected_page()
         return page.get_child() if page else None
@@ -354,7 +358,7 @@ class MatizWindow(Adw.ApplicationWindow):
             self.view.set_page_pinned(page, True)
         layout = state.get("layout")
         if not layout:
-            if state:  # formato antigo: a aba era um único terminal (id = sessão)
+            if state:  # old format: the tab was a single terminal (id = session)
                 layout = {"pane": {"id": state.get("id"), "cwd": state.get("cwd"), "resume": state.get("resume")}}
             else:
                 layout = {"pane": {"cwd": cwd or os.path.expanduser("~")}}
@@ -378,7 +382,7 @@ class MatizWindow(Adw.ApplicationWindow):
         self.schedule_save()
         return tab
 
-    # ---------- painéis ----------
+    # ---------- panes ----------
     def _split(self, pane, horizontal):
         if pane:
             pane.tab.split(pane, horizontal)
@@ -386,7 +390,7 @@ class MatizWindow(Adw.ApplicationWindow):
             self.schedule_save()
 
     def _close_pane(self, pane):
-        """Fecha o painel; se for o último da aba, fecha a aba."""
+        """Close the pane; if it is the last one in the tab, close the tab."""
         if not pane:
             return
         tab = pane.tab
@@ -414,7 +418,7 @@ class MatizWindow(Adw.ApplicationWindow):
     def _pick_color(self, tab):
         if not tab:
             return
-        dialog = Gtk.ColorDialog(title="Cor da aba", with_alpha=False)
+        dialog = Gtk.ColorDialog(title=_("Tab color"), with_alpha=False)
         initial = Gdk.RGBA()
         initial.parse(tab.color or "#3e8ed0")
 
@@ -432,11 +436,11 @@ class MatizWindow(Adw.ApplicationWindow):
             return
         entry = Gtk.Entry(text=tab.custom_title or "", placeholder_text=tab.display_title(),
                           activates_default=True)
-        dlg = Adw.AlertDialog(heading="Renomear aba",
-                              body="Deixe vazio para voltar ao título automático.")
+        dlg = Adw.AlertDialog(heading=_("Rename tab"),
+                              body=_("Leave empty to go back to the automatic title."))
         dlg.set_extra_child(entry)
-        dlg.add_response("cancel", "Cancelar")
-        dlg.add_response("ok", "Renomear")
+        dlg.add_response("cancel", _("Cancel"))
+        dlg.add_response("ok", _("Rename"))
         dlg.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
         dlg.set_default_response("ok")
 
@@ -452,31 +456,32 @@ class MatizWindow(Adw.ApplicationWindow):
 
     def _show_shortcuts(self):
         groups = [
-            ("Abas", [
-                ("Nova aba", "<Control><Shift>t"), ("Nova aba nesta pasta", "<Control><Shift>d"),
-                ("Fechar painel / aba", "<Control><Shift>w"), ("Renomear aba", "<Control><Shift>r"),
-                ("Próxima / anterior", "<Control>Page_Down <Control>Page_Up"),
-                ("Mover aba", "<Control><Shift>Page_Down <Control><Shift>Page_Up"),
-                ("Ir para a aba 1…9", "<Alt>1"),
+            (_("Tabs"), [
+                (_("New tab"), "<Control><Shift>t"), (_("New tab in this folder"), "<Control><Shift>d"),
+                (_("Close pane / tab"), "<Control><Shift>w"), (_("Rename tab"), "<Control><Shift>r"),
+                (_("Next / previous"), "<Control>Page_Down <Control>Page_Up"),
+                (_("Move tab"), "<Control><Shift>Page_Down <Control><Shift>Page_Up"),
+                (_("Go to tab 1…9"), "<Alt>1"),
             ]),
-            ("Cores", [(label.split()[-1], f"<Control><Alt>{i}") for i, (label, _) in enumerate(PRESETS, 1)]
-             + [("Sem cor", "<Control><Alt>0")]),
-            ("Painéis", [
-                ("Dividir lado a lado", "<Alt><Shift>plus"), ("Dividir em cima / embaixo", "<Alt><Shift>underscore"),
-                ("Ir para o painel vizinho", "<Alt>Left <Alt>Right <Alt>Up <Alt>Down"),
+            (_("Colors"), [(_(name), f"<Control><Alt>{i}") for i, (_emoji, name, _hex) in enumerate(PRESETS, 1)]
+             + [(_("No color"), "<Control><Alt>0")]),
+            (_("Panes"), [
+                (_("Split side by side"), "<Alt><Shift>plus"), (_("Split top / bottom"), "<Alt><Shift>underscore"),
+                (_("Go to neighboring pane"), "<Alt>Left <Alt>Right <Alt>Up <Alt>Down"),
             ]),
-            ("Pasta e histórico", [
-                ("Mostrar/esconder árvore de arquivos", "<Control><Shift>b"),
-                ("Abrir pasta no gerenciador de arquivos", "<Control><Shift>e"),
-                ("Copiar caminho da pasta", "<Control><Shift>y"),
-                ("Buscar no terminal", "<Control><Shift>f"),
-                ("Salvar histórico em arquivo", "<Control><Shift>s"),
-                ("Limpar tela e histórico", "<Control><Shift>k"),
+            (_("Folder and scrollback"), [
+                (_("Show/hide file tree"), "<Control><Shift>b"),
+                (_("Open folder in file manager"), "<Control><Shift>e"),
+                (_("Copy folder path"), "<Control><Shift>y"),
+                (_("Search in terminal"), "<Control><Shift>f"),
+                (_("Save scrollback to file"), "<Control><Shift>s"),
+                (_("Clear screen and scrollback"), "<Control><Shift>k"),
             ]),
-            ("Terminal", [
-                ("Copiar / colar", "<Control><Shift>c <Control><Shift>v"),
-                ("Zoom", "<Control>plus <Control>minus <Control>0"),
-                ("Atalhos de teclado", "<Control>question"),
+            # Translators: section title in the keyboard shortcuts dialog
+            (_("Terminal"), [
+                (_("Copy / paste"), "<Control><Shift>c <Control><Shift>v"),
+                (_("Zoom"), "<Control>plus <Control>minus <Control>0"),
+                (_("Keyboard shortcuts"), "<Control>question"),
             ]),
         ]
         dlg = Adw.ShortcutsDialog()
@@ -485,9 +490,9 @@ class MatizWindow(Adw.ApplicationWindow):
             for label, accel in items:
                 sec.add(Adw.ShortcutsItem(title=label, accelerator=accel))
             dlg.add(sec)
-        extra = Adw.ShortcutsSection(title="Mouse")
-        extra.add(Adw.ShortcutsItem(title="Abrir link ou arquivo:linha (Ctrl+clique)", accelerator="<Control>"))
-        extra.add(Adw.ShortcutsItem(title="Menu da aba: botão direito no título da aba", accelerator=""))
+        extra = Adw.ShortcutsSection(title=_("Mouse"))
+        extra.add(Adw.ShortcutsItem(title=_("Open link or file:line (Ctrl+click)"), accelerator="<Control>"))
+        extra.add(Adw.ShortcutsItem(title=_("Tab menu: right-click the tab title"), accelerator=""))
         dlg.add(extra)
         dlg.present(self)
 
@@ -499,14 +504,14 @@ class MatizWindow(Adw.ApplicationWindow):
         self.schedule_save()
 
     def run_in_new_tab(self, argv):
-        """Abre uma aba na pasta pessoal e executa o comando (ex.: login)."""
+        """Open a tab in the home folder and run the command (e.g. login)."""
         tab = self.new_tab(cwd=os.path.expanduser("~"))
         p = tab.active
         if p:
             p._pending_resume = {"argv": list(argv), "mode": "run", "kind": "generic",
                                  "label": argv[0], "cwd": p.cwd}
             p._resume_typed = False
-            if p.shell_pid:  # a shell já subiu (modo local rápido)
+            if p.shell_pid:  # the shell is already up (fast local mode)
                 GLib.timeout_add(600, p._type_resume)
 
     def toast(self, text):
@@ -527,7 +532,7 @@ class MatizWindow(Adw.ApplicationWindow):
             self.schedule_save()
 
     def _open_with(self, pane, app_id):
-        """app_id=None → gerenciador de arquivos padrão."""
+        """app_id=None → default file manager."""
         if not pane:
             return
         self._launch_folder(pane.current_dir(), app_id)
@@ -536,14 +541,16 @@ class MatizWindow(Adw.ApplicationWindow):
         apps = folder_apps()
         app = next((a for a in apps if a.get_id() == app_id), None) if app_id else (apps[0] if apps else None)
         if not app:
-            self.toast("Nenhum aplicativo para abrir pastas")
+            self.toast(_("No application to open folders"))
             return
         try:
             ctx = self.get_display().get_app_launch_context()
             app.launch([Gio.File.new_for_path(path)], ctx)
-            self.toast(f"Abrindo {os.path.basename(path) or path} com {app.get_name()}")
+            # Translators: {name} is a folder name, {app} an application name
+            self.toast(_("Opening {name} with {app}").format(name=os.path.basename(path) or path,
+                                                             app=app.get_name()))
         except GLib.Error as e:
-            self.toast(f"Falha ao abrir: {e.message}")
+            self.toast(_("Failed to open: {error}").format(error=e.message))
 
     def _open_with_other(self, pane):
         if not pane:
@@ -566,7 +573,7 @@ class MatizWindow(Adw.ApplicationWindow):
         provider = Gdk.ContentProvider.new_for_bytes(
             "text/plain;charset=utf-8", GLib.Bytes.new(path.encode()))
         self.get_clipboard().set_content(provider)
-        self.toast(f"Copiado: {path}")
+        self.toast(_("Copied: {path}").format(path=path))
 
     def _clear(self, pane):
         if pane:
@@ -577,7 +584,7 @@ class MatizWindow(Adw.ApplicationWindow):
             return
         tab = pane.tab
         name = (tab.custom_title or os.path.basename(pane.cwd) or "terminal").replace("/", "-")
-        dlg = Gtk.FileDialog(title="Salvar histórico",
+        dlg = Gtk.FileDialog(title=_("Save scrollback"),
                              initial_name=f"{name}-{GLib.DateTime.new_now_local().format('%Y%m%d-%H%M')}.txt")
         dlg.set_initial_folder(Gio.File.new_for_path(pane.current_dir()))
 
@@ -589,13 +596,13 @@ class MatizWindow(Adw.ApplicationWindow):
             try:
                 with open(f.get_path(), "w", encoding="utf-8") as fh:
                     fh.write(pane.full_text())
-                self.toast(f"Histórico salvo em {f.get_basename()}")
+                self.toast(_("Scrollback saved to {file}").format(file=f.get_basename()))
             except OSError as e:
-                self.toast(f"Falha ao salvar: {e.strerror}")
+                self.toast(_("Failed to save: {error}").format(error=e.strerror))
 
         dlg.save(self, None, done)
 
-    # ---------- links (Ctrl+clique) ----------
+    # ---------- links (Ctrl+click) ----------
     def open_link(self, pane, kind, target, line=None, col=None) -> bool:
         if kind == "url":
             Gtk.UriLauncher.new(target).launch(self, None, _ignore_finish("launch_finish"))
@@ -603,23 +610,27 @@ class MatizWindow(Adw.ApplicationWindow):
         if os.path.isdir(target):
             self._launch_folder(target)
             return True
-        ctype, _ = Gio.content_type_guess(target, None)
+        ctype, _uncertain = Gio.content_type_guess(target, None)
         is_text = Gio.content_type_is_a(ctype, "text/plain") or line is not None
         argv = self._editor_argv(target, line, col) if is_text else None
         if argv:
             try:
                 proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE)
                 proc.wait_async(None, None)
-                where = f":{line}" if line else ""
-                self.toast(f"Abrindo {os.path.basename(target)}{where}")
+                name = os.path.basename(target)
+                if line:
+                    # Translators: {file} is a file name, {line} a line number
+                    self.toast(_("Opening {file}:{line}").format(file=name, line=line))
+                else:
+                    self.toast(_("Opening {file}").format(file=name))
                 return True
             except GLib.Error as e:
-                self.toast(f"Falha ao abrir editor: {e.message}")
+                self.toast(_("Failed to open editor: {error}").format(error=e.message))
         Gtk.FileLauncher.new(Gio.File.new_for_path(target)).launch(self, None, _ignore_finish("launch_finish"))
         return True
 
     def _editor_argv(self, path, line, col):
-        """Comando do editor. Config "editor": ["code", "--goto", "{file}:{line}:{col}"]."""
+        """Editor command. Config "editor": ["code", "--goto", "{file}:{line}:{col}"]."""
         tpl = self.config.get("editor")
         if isinstance(tpl, list) and tpl:
             return [a.format(file=path, line=line or 1, col=col or 1) for a in tpl]
@@ -633,7 +644,7 @@ class MatizWindow(Adw.ApplicationWindow):
                 return build()
         return None
 
-    # ---------- notificações ----------
+    # ---------- notifications ----------
     def _pane_visible(self, pane) -> bool:
         return (self.is_active() and pane.tab is self.current_tab() and pane.tab.active is pane)
 
@@ -642,28 +653,30 @@ class MatizWindow(Adw.ApplicationWindow):
             return
         if pane.tab.page is not None and pane.tab is not self.current_tab():
             pane.tab.page.set_needs_attention(True)
-        if self.config.get("notificacoes", True) and not self.is_active():
+        if self.config.get("notifications", True) and not self.is_active():
             n = Gio.Notification.new(title)
             n.set_body(body)
-            n.set_default_action_and_target("app.focar", GLib.Variant.new_string(pane.pane_id))
+            n.set_default_action_and_target("app.focus-pane", GLib.Variant.new_string(pane.pane_id))
             self.get_application().send_notification(f"matiz-{pane.pane_id}", n)
 
     def on_command_finished(self, pane, cmd, took):
         if took >= self.notify_after:
             short = cmd if len(cmd) <= 60 else cmd[:57] + "…"
-            self._attention(pane, f"Terminou: {short}",
-                            f"{pane.tab.display_title()} · {_fmt_secs(took)}")
+            # Translators: notification title; {command} is the command that finished
+            self._attention(pane, _("Finished: {command}").format(command=short),
+                            _("{tab} · {duration}").format(tab=pane.tab.display_title(), duration=_fmt_secs(took)))
 
     def on_claude_finished(self, pane, status, took):
-        what = "precisa de você" if status not in ("idle", "done") else "terminou de responder"
-        self._attention(pane, f"Claude {what}", f"{pane.tab.display_title()} · {_fmt_secs(took)}")
+        title = _("Claude needs you") if status not in ("idle", "done") else _("Claude finished responding")
+        self._attention(pane, title,
+                        _("{tab} · {duration}").format(tab=pane.tab.display_title(), duration=_fmt_secs(took)))
 
     def on_pane_bell(self, pane):
         now = time.monotonic()
         if now - self._last_bell.get(pane.pane_id, 0) < 10:
             return
         self._last_bell[pane.pane_id] = now
-        self._attention(pane, "Alerta no terminal", pane.tab.display_title())
+        self._attention(pane, _("Terminal bell"), pane.tab.display_title())
 
     def focus_pane(self, pane_id):
         for t in self.tabs():
@@ -678,11 +691,11 @@ class MatizWindow(Adw.ApplicationWindow):
         if page is not None and self.is_active():
             page.set_needs_attention(False)
 
-    # ---------- busca ----------
+    # ---------- search ----------
     def _build_search_bar(self):
-        self.search_entry = Gtk.SearchEntry(placeholder_text="Buscar no terminal…", hexpand=True)
-        up = Gtk.Button(icon_name="go-up-symbolic", tooltip_text="Anterior (Enter)")
-        down = Gtk.Button(icon_name="go-down-symbolic", tooltip_text="Próxima (Shift+Enter)")
+        self.search_entry = Gtk.SearchEntry(placeholder_text=_("Search in terminal…"), hexpand=True)
+        up = Gtk.Button(icon_name="go-up-symbolic", tooltip_text=_("Previous (Enter)"))
+        down = Gtk.Button(icon_name="go-down-symbolic", tooltip_text=_("Next (Shift+Enter)"))
         box = Gtk.Box(spacing=6)
         box.append(self.search_entry)
         box.append(up)
@@ -799,9 +812,9 @@ class MatizWindow(Adw.ApplicationWindow):
         return True
 
     def on_pane_exited(self, pane):
-        """A shell do painel terminou (ex.: `exit`). Fecha o painel após um
-        pequeno atraso: se for desligamento do sistema, o SIGTERM chega antes
-        e nada é removido do estado salvo."""
+        """The pane's shell exited (e.g. `exit`). Close the pane after a short
+        delay: if the system is shutting down, SIGTERM arrives first and
+        nothing is removed from the saved state."""
         if self.quitting:
             return
 
@@ -841,9 +854,14 @@ class MatizWindow(Adw.ApplicationWindow):
             path = "~" + tab.cwd[len(home):] if tab.cwd.startswith(home) else tab.cwd
             n = self.view.get_n_pages()
             np_ = len(tab.panes())
-            extra = f"  ·  {np_} painéis" if np_ > 1 else ""
+            tabs_txt = ngettext("{n} tab", "{n} tabs", n).format(n=n)
+            if np_ > 1:
+                panes_txt = ngettext("{n} pane", "{n} panes", np_).format(n=np_)
+                subtitle = f"{path}  ·  {tabs_txt}  ·  {panes_txt}"
+            else:
+                subtitle = f"{path}  ·  {tabs_txt}"
             self.wtitle.set_title(f"Matiz — {tab.display_title()}" if tab.custom_title or tab.fg_name else "Matiz")
-            self.wtitle.set_subtitle(f"{path}  ·  {n} aba{'s' if n != 1 else ''}{extra}")
+            self.wtitle.set_subtitle(subtitle)
             self.set_title(f"{tab.display_title()} — Matiz")
         if tab:
             self.tree.follow(tab.active)
@@ -859,15 +877,15 @@ class MatizWindow(Adw.ApplicationWindow):
             css = ""
         self.css.load_from_string(css)
 
-    # ================= salvar / restaurar =================
+    # ================= save / restore =================
     def restore(self):
         state = session.load_state()
         win = state.get("window") or {}
         self.set_default_size(int(win.get("width", 1100)), int(win.get("height", 720)))
         if win.get("maximized"):
             self.maximize()
-        self.split.set_position(int(win.get("arvore_largura", 260)))
-        if win.get("arvore"):
+        self.split.set_position(int(win.get("file_tree_width", win.get("arvore_largura", 260))))
+        if win.get("file_tree", win.get("arvore")):
             self.tree_btn.set_active(True)
         tabs = [t for t in state.get("tabs", []) if isinstance(t, dict)]
         for t in tabs:
@@ -895,8 +913,8 @@ class MatizWindow(Adw.ApplicationWindow):
                 "width": self.get_width() or 1100,
                 "height": self.get_height() or 720,
                 "maximized": self.is_maximized(),
-                "arvore": self.tree.get_visible(),
-                "arvore_largura": self.split.get_position(),
+                "file_tree": self.tree.get_visible(),
+                "file_tree_width": self.split.get_position(),
             },
             "active": active,
             "tabs": [dict(t.to_state(), pinned=bool(t.page and t.page.get_pinned())) for t in tabs],
@@ -944,14 +962,14 @@ class MatizWindow(Adw.ApplicationWindow):
         need_sb = self._tick % SCROLLBACK_EVERY == 0 and any(p.dirty for p in self.all_panes())
         try:
             self.save(scrollback=need_sb)
-        except Exception as e:  # nunca derruba o terminal por erro de gravação
-            print(f"matiz: falha ao salvar estado: {e}", file=sys.stderr)
+        except Exception as e:  # a save error must never take the terminal down
+            print(f"matiz: failed to save state: {e}", file=sys.stderr)
         self._update_chrome()
         return True
 
     def _on_close_request(self, *_):
         if not self.quitting:
-            # Fechar a janela NÃO fecha a sessão: tudo é salvo para reabrir igual.
+            # Closing the window does NOT end the session: everything is saved to reopen as-is.
             try:
                 self.save(authoritative=True)
             finally:
@@ -968,17 +986,17 @@ class MatizWindow(Adw.ApplicationWindow):
                 text = res[0] if isinstance(res, tuple) else res
                 session.atomic_write(session.Path(d) / f"{p.pane_id}.screen.txt", text or "")
             except Exception as e:
-                print(f"matiz: dump falhou: {e}", file=sys.stderr)
+                print(f"matiz: dump failed: {e}", file=sys.stderr)
 
     def on_terminate_signal(self):
-        """SIGTERM/SIGHUP (desligar, logout): salva sem 'autoridade' — os
-        processos podem já estar morrendo — e sai."""
+        """SIGTERM/SIGHUP (shutdown, logout): save without 'authority' — the
+        processes may already be dying — and quit."""
         self._debug_dump()
         if not self.quitting:
             try:
                 self.save(authoritative=False)
             except Exception as e:
-                print(f"matiz: falha ao salvar no encerramento: {e}", file=sys.stderr)
+                print(f"matiz: failed to save on shutdown: {e}", file=sys.stderr)
             self.quitting = True
         self.get_application().quit()
 
@@ -995,12 +1013,15 @@ def _layout_ids(node) -> list[str]:
 def _fmt_secs(s: float) -> str:
     s = int(s)
     if s < 60:
-        return f"{s} s"
+        # Translators: duration in seconds
+        return _("{s}s").format(s=s)
     m, s = divmod(s, 60)
     if m < 60:
-        return f"{m} min {s:02d} s"
+        # Translators: duration in minutes and seconds
+        return _("{m}m {s:02d}s").format(m=m, s=s)
     h, m = divmod(m, 60)
-    return f"{h} h {m:02d} min"
+    # Translators: duration in hours and minutes
+    return _("{h}h {m:02d}m").format(h=h, m=m)
 
 
 def _ignore_finish(method):
@@ -1019,8 +1040,8 @@ EDITOR_IDS = [
 
 
 def folder_apps() -> list:
-    """Aplicativos que abrem pastas: o padrão do sistema primeiro, depois os
-    demais registrados para pastas e editores de código instalados."""
+    """Applications that open folders: the system default first, then the
+    others registered for folders and installed code editors."""
     seen, out = set(), []
 
     def add(app):
@@ -1055,9 +1076,9 @@ class MatizApp(Adw.Application):
         Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
         for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
             GLib.unix_signal_add(GLib.PRIORITY_HIGH, sig, self._on_signal)
-        focar = Gio.SimpleAction.new("focar", GLib.VariantType.new("s"))
-        focar.connect("activate", lambda _a, v: self.window and self.window.focus_pane(v.get_string()))
-        self.add_action(focar)
+        focus = Gio.SimpleAction.new("focus-pane", GLib.VariantType.new("s"))
+        focus.connect("activate", lambda _a, v: self.window and self.window.focus_pane(v.get_string()))
+        self.add_action(focus)
 
     def _on_signal(self):
         if self.window:

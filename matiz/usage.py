@@ -1,9 +1,9 @@
-"""Coleta o uso de ferramentas de IA de linha de comando a partir dos dados
-que elas mesmas gravam no disco. Somente leitura; nada sai da máquina.
+"""Collects usage of command-line AI tools from the data they themselves
+write to disk. Read-only; nothing leaves the machine.
 
-  Claude Code  ~/.claude/projects/**/*.jsonl   (tokens por mensagem)
-  OpenCode     ~/.local/share/opencode/opencode.db  (tokens + custo)
-  Codex        ~/.codex/sessions/**/*.jsonl    (tokens + % do limite do plano)
+  Claude Code  ~/.claude/projects/**/*.jsonl   (tokens per message)
+  OpenCode     ~/.local/share/opencode/opencode.db  (tokens + cost)
+  Codex        ~/.codex/sessions/**/*.jsonl    (tokens + % of plan limit)
 """
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+
+from .i18n import N_, _, fmt_decimal
 
 HOME = Path.home()
 CLAUDE_PROJECTS = Path(os.environ.get("MATIZ_CLAUDE_PROJECTS", HOME / ".claude" / "projects"))
@@ -69,16 +71,16 @@ class ToolUsage:
     name: str
     installed: bool
     has_data: bool = False
-    windows: dict[str, Agg] = field(default_factory=dict)   # "5h", "hoje", "7d"
-    models: list[tuple[str, int]] = field(default_factory=list)  # 7 dias
-    hourly: list[int] = field(default_factory=lambda: [0] * 24)  # últimas 24 h (tokens)
+    windows: dict[str, Agg] = field(default_factory=dict)   # "5h", "today", "7d"
+    models: list[tuple[str, int]] = field(default_factory=list)  # last 7 days
+    hourly: list[int] = field(default_factory=lambda: [0] * 24)  # last 24 h (tokens)
     active: int = 0
     busy: int = 0
-    limits: list[dict] = field(default_factory=list)  # [{"nome","pct","reinicia"}]
+    limits: list[dict] = field(default_factory=list)  # [{"name","pct","resets_at"}]
     note: str | None = None
     last_used: float | None = None
-    auth: dict | None = None            # {"conectado", "plano"} via CLI oficial
-    limits_enabled: bool = False        # Claude: intermediário da statusLine ativo
+    auth: dict | None = None            # {"logged_in", "plan"} via the official CLI
+    limits_enabled: bool = False        # Claude: statusLine wrapper installed
     limits_updated: float | None = None
 
 
@@ -114,7 +116,7 @@ def _procs_named(name: str) -> int:
 
 
 class _JsonlTail:
-    """Lê arquivos .jsonl de forma incremental (só o que foi acrescentado)."""
+    """Reads .jsonl files incrementally (only what was appended)."""
 
     def __init__(self):
         self.pos: dict[Path, int] = {}
@@ -132,7 +134,7 @@ class _JsonlTail:
                     continue
                 seen.add(f)
                 start = self.pos.get(f, 0)
-                if st.st_size < start:  # arquivo reescrito
+                if st.st_size < start:  # file was rewritten
                     start, self.records[f] = 0, []
                 if st.st_size == start:
                     continue
@@ -141,7 +143,7 @@ class _JsonlTail:
                 with open(f, "rb") as fh:
                     fh.seek(start)
                     data = fh.read()
-                end = data.rfind(b"\n") + 1  # só linhas completas
+                end = data.rfind(b"\n") + 1  # complete lines only
                 for raw in data[:end].splitlines():
                     r = parse_line(raw, ctx, f)
                     if r is not None:
@@ -180,7 +182,7 @@ class ClaudeSource:
         model = m.get("model") or "?"
         if not u or model == "<synthetic>":
             return None
-        # o Claude Code grava uma linha por bloco de conteúdo com o mesmo uso: deduplica
+        # Claude Code writes one line per content block with the same usage: dedupe
         key = f'{m.get("id")}:{d.get("requestId")}'
         if key in self.seen_ids:
             return None
@@ -212,11 +214,11 @@ class ClaudeSource:
         t.limits_enabled = CL.is_enabled()
         lim = CL.read_limits() if t.limits_enabled else None
         if lim:
-            t.limits_updated = lim.get("atualizado")
-            for j in lim.get("janelas", []):
-                t.limits.append({"nome": j["nome"], "pct": j["pct"], "reinicia": j.get("reinicia")})
-            if not lim.get("disponivel", True):
-                t.note = "Limites do plano não se aplicam a este login (chave de API, Bedrock ou Vertex)."
+            t.limits_updated = lim.get("updated")
+            for w in lim.get("windows", []):
+                t.limits.append({"name": w["name"], "pct": w["pct"], "resets_at": w.get("resets_at")})
+            if not lim.get("available", True):
+                t.note = _("Plan limits do not apply to this login (API key, Bedrock or Vertex).")
         return t
 
 
@@ -237,7 +239,7 @@ class OpenCodeSource:
                 t.last_used = last / 1000 if last else None
                 con.close()
             except sqlite3.Error as e:
-                t.note = f"Não foi possível ler o banco: {e}"
+                t.note = _("Could not read the database: {error}").format(error=e)
                 rows = []
             for ms, data in rows:
                 try:
@@ -295,17 +297,18 @@ class CodexSource:
         t.records = self.tail.scan(CODEX_SESSIONS, now - WINDOW_7D, self._parse)
         if self.last_limits:
             ts, rl = self.last_limits
-            for key, nome in (("primary", "Janela curta"), ("secondary", "Semanal")):
+            # Names are stored in English and translated when displayed (usage_ui).
+            for key, name in (("primary", N_("Short window")), ("secondary", N_("Weekly"))):
                 w = rl.get(key)
                 if not isinstance(w, dict) or w.get("used_percent") is None:
                     continue
                 mins = w.get("window_minutes")
                 if mins:
-                    nome = f"{int(mins) // 60} h" if mins < 1440 else ("Semanal" if mins >= 10080 else f"{int(mins) // 1440} d")
+                    name = f"{int(mins) // 60}h" if mins < 1440 else ("Weekly" if mins >= 10080 else f"{int(mins) // 1440}d")
                 reset = w.get("resets_at")
                 if reset is None and w.get("resets_in_seconds") is not None:
                     reset = ts + float(w["resets_in_seconds"])
-                t.limits.append({"nome": nome, "pct": float(w["used_percent"]), "reinicia": reset})
+                t.limits.append({"name": name, "pct": float(w["used_percent"]), "resets_at": reset})
         t.active = _procs_named("codex")
         if t.installed:
             from . import claude_limits as CL
@@ -319,7 +322,7 @@ SOURCES = None
 
 
 def collect(now: float | None = None) -> list[ToolUsage]:
-    """Coleta tudo. Chamadas repetidas são incrementais (rápidas)."""
+    """Collects everything. Repeated calls are incremental (fast)."""
     global SOURCES
     if SOURCES is None:
         SOURCES = [ClaudeSource(), OpenCodeSource(), CodexSource()]
@@ -329,20 +332,20 @@ def collect(now: float | None = None) -> list[ToolUsage]:
     for src in SOURCES:
         try:
             t = src.collect(now)
-        except Exception as e:  # uma fonte com problema não derruba as outras
-            t = ToolUsage(src.id, src.name, installed=True, note=f"Erro ao ler: {e}")
+        except Exception as e:  # one broken source does not take down the others
+            t = ToolUsage(src.id, src.name, installed=True, note=_("Read error: {error}").format(error=e))
             t.records = []
         recs = t.records
         del t.records
         t.has_data = bool(recs)
         if recs:
             t.last_used = max(r.ts for r in recs)
-        t.windows = {"5h": Agg(), "hoje": Agg(), "7d": Agg()}
+        t.windows = {"5h": Agg(), "today": Agg(), "7d": Agg()}
         models: dict[str, int] = {}
         for r in recs:
             t.windows["7d"].add(r)
             if r.ts >= midnight:
-                t.windows["hoje"].add(r)
+                t.windows["today"].add(r)
             if r.ts >= now - 5 * 3600:
                 t.windows["5h"].add(r)
             models[r.model] = models.get(r.model, 0) + r.total
@@ -357,9 +360,12 @@ def collect(now: float | None = None) -> list[ToolUsage]:
 
 def fmt_tokens(n: int) -> str:
     if n >= 1_000_000_000:
-        return f"{n / 1e9:.1f} bi".replace(".", ",")
+        # Translators: billions of tokens, e.g. "1.9B"; {n} is already formatted
+        return _("{n}B").format(n=fmt_decimal(n / 1e9))
     if n >= 1_000_000:
-        return f"{n / 1e6:.1f} mi".replace(".", ",")
+        # Translators: millions of tokens, e.g. "3.4M"; {n} is already formatted
+        return _("{n}M").format(n=fmt_decimal(n / 1e6))
     if n >= 1_000:
-        return f"{n / 1e3:.1f} mil".replace(".", ",")
+        # Translators: thousands of tokens, e.g. "1.2k"; {n} is already formatted
+        return _("{n}k").format(n=fmt_decimal(n / 1e3))
     return str(n)

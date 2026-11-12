@@ -1,4 +1,4 @@
-"""Persistência do estado (abas, cores, comandos, histórico da tela)."""
+"""State persistence (tabs, colors, commands, screen history) and configuration."""
 from __future__ import annotations
 
 import json
@@ -23,7 +23,7 @@ SCROLLBACK_DIR = STATE_DIR / "scrollback"
 
 
 def atomic_write(path: Path, data: str) -> None:
-    """Grava de forma atômica (tmp + fsync + rename): sobrevive a desligar o PC."""
+    """Atomic write (tmp + fsync + rename): survives a power loss."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
     try:
@@ -82,17 +82,39 @@ def prune_scrollback(keep_ids: set[str]) -> None:
         pass
 
 
+# Legacy (Portuguese) config keys still accepted, mapped to the English ones.
+LEGACY_KEYS = {
+    "reexecutar_extra": "rerun_extra",
+    "linhas_historico_salvas": "saved_scrollback_lines",
+    "linhas_rolagem": "scrollback_lines",
+    "fonte": "font",
+    "notificar_apos_segundos": "notify_after_seconds",
+    "notificacoes": "notifications",
+    "persistir_processos": "persist_processes",
+    "widget_uso": "usage_widget",
+}
+
+
 def load_config() -> dict:
-    """~/.config/matiz/config.json (opcional).
+    """~/.config/matiz/config.json (optional).
 
     {
-      "reexecutar_extra": [["python", "manage.py", "runserver"]],
-      "linhas_historico_salvas": 3000,
-      "fonte": "Monospace 11"
+      "rerun_extra": [["python", "manage.py", "runserver"]],
+      "saved_scrollback_lines": 3000,
+      "font": "Monospace 11"
     }
+
+    Legacy Portuguese keys are mapped to their English names when the English
+    key is absent.
     """
     try:
         data = json.loads((CONFIG_DIR / "config.json").read_text())
-        return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
         return {}
+    if not isinstance(data, dict):
+        return {}
+    for old, new in LEGACY_KEYS.items():
+        if old in data:
+            value = data.pop(old)
+            data.setdefault(new, value)
+    return data

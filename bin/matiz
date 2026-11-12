@@ -1,4 +1,4 @@
 #!/bin/sh
-# Lança o terminal Matiz a partir do diretório do projeto.
+# Launches the Matiz terminal from the project directory.
 DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m matiz "$@"

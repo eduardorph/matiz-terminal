@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def is_dead(pid):
-    """Morto ou zumbi (já terminou, só falta o pai registrar)."""
+    """Dead or zombie (already exited, just not yet reaped by its parent)."""
     try:
         stat = Path(f"/proc/{pid}/stat").read_text()
     except OSError:
@@ -27,7 +27,7 @@ class DaemonTest(unittest.TestCase):
         end = time.time() + wait
         while time.time() < end and not is_dead(pid):
             time.sleep(0.05)
-        self.assertTrue(is_dead(pid), f"processo {pid} ainda vivo")
+        self.assertTrue(is_dead(pid), f"process {pid} still alive")
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -72,29 +72,29 @@ class DaemonTest(unittest.TestCase):
                     out += p
             if pred(msgs, bytes(out)):
                 return msgs, bytes(out)
-        self.fail(f"tempo esgotado; recebido: {msgs!r}")
+        self.fail(f"timed out; received: {msgs!r}")
 
     def test_survives_disconnect_and_replays(self):
         s = self.conn("a1")
         msgs, _ = self.read_until(s, lambda m, o: any(k == b"S" for k, _ in m))
         info = json.loads(next(p for k, p in msgs if k == b"S"))
         self.assertFalse(info["attached"])
-        s.sendall(P.frame(b"I", b"echo marca-$((40+2)); sleep 30\n"))
-        self.read_until(s, lambda m, o: b"marca-42" in o)
-        s.close()  # "fecha a janela"
+        s.sendall(P.frame(b"I", b"echo marker-$((40+2)); sleep 30\n"))
+        self.read_until(s, lambda m, o: b"marker-42" in o)
+        s.close()  # "close the window"
         time.sleep(0.3)
 
         s2 = self.conn("a1")
-        msgs, out = self.read_until(s2, lambda m, o: b"marca-42" in o)
+        msgs, out = self.read_until(s2, lambda m, o: b"marker-42" in o)
         info2 = json.loads(next(p for k, p in msgs if k == b"S"))
         self.assertTrue(info2["attached"])
-        self.assertEqual(info2["pid"], info["pid"])  # mesma shell, ainda viva
+        self.assertEqual(info2["pid"], info["pid"])  # same shell, still alive
         os.kill(info["pid"], 0)
 
-        s2.sendall(P.frame(b"K"))  # fecha a aba de verdade
+        s2.sendall(P.frame(b"K"))  # actually close the tab
         self.assertDead(info["pid"])
         s2.close()
-        self.proc.wait(10)  # sem sessões e sem clientes → sai sozinho
+        self.proc.wait(10)  # no sessions and no clients → exits on its own
         self.assertEqual(self.proc.returncode, 0)
 
     def test_ctrl_c_and_signals_reach_programs(self):
@@ -104,7 +104,7 @@ class DaemonTest(unittest.TestCase):
         _, out = self.read_until(s, lambda m, o: b"SigBlk" in o and b"SigIgn" in o.split(b"SigBlk")[-1] or o.count(b"SigIgn:") >= 1 and b"SigBlk:" in o)
         ign = int(out.split(b"SigIgn:")[1].split()[0], 16)
         for sig in (1, 2, 13):  # SIGHUP, SIGINT, SIGPIPE
-            self.assertFalse(ign & (1 << (sig - 1)), f"sinal {sig} herdado como ignorado")
+            self.assertFalse(ign & (1 << (sig - 1)), f"signal {sig} inherited as ignored")
         job = self._fg_job(s, "matizjobe1")
         s.sendall(P.frame(b"I", b"\x03"))  # Ctrl+C
         self.assertDead(job)
@@ -112,8 +112,8 @@ class DaemonTest(unittest.TestCase):
     def test_clear_forgets_buffer(self):
         s = self.conn("f1")
         self.read_until(s, lambda m, o: any(k == b"S" for k, _ in m))
-        s.sendall(P.frame(b"I", b"echo segredo-$((1+1))\n"))
-        self.read_until(s, lambda m, o: b"segredo-2" in o)
+        s.sendall(P.frame(b"I", b"echo secret-$((1+1))\n"))
+        self.read_until(s, lambda m, o: b"secret-2" in o)
         s.sendall(P.frame(b"C"))
         time.sleep(0.2)
         s.close()
@@ -125,7 +125,7 @@ class DaemonTest(unittest.TestCase):
             out += b"".join(p for k, p in P.Decoder().feed(s2.recv(65536)) if k == b"O")
         except socket.timeout:
             pass
-        self.assertNotIn(b"segredo-2", out)
+        self.assertNotIn(b"secret-2", out)
 
     def test_shell_exit_notifies(self):
         s = self.conn("b1")
@@ -141,10 +141,10 @@ class DaemonTest(unittest.TestCase):
                 pid = int(out[0])
                 stat = Path(f"/proc/{pid}/stat").read_text()
                 f = stat[stat.rindex(")") + 2 :].split()
-                if f[5] == f[2]:  # tpgid == pgrp → está em primeiro plano
+                if f[5] == f[2]:  # tpgid == pgrp → it is in the foreground
                     return pid
             time.sleep(0.05)
-        self.fail("job não iniciou")
+        self.fail("job did not start")
 
     def test_close_tab_kills_foreground_job(self):
         s = self.conn("d1")

@@ -15,7 +15,7 @@ class ClaudeArgv(unittest.TestCase):
         return procinfo.claude_resume_argv(argv, "SID")
 
     def test_keeps_model_and_drops_prompt(self):
-        self.assertEqual(self.r(["claude", "--model", "opus", "conserta o bug"]),
+        self.assertEqual(self.r(["claude", "--model", "opus", "fix the bug"]),
                          ["claude", "--model", "opus", "--resume", "SID"])
 
     def test_replaces_continue_and_old_resume(self):
@@ -35,7 +35,7 @@ class ClaudeArgv(unittest.TestCase):
 class ResumeFor(unittest.TestCase):
     @staticmethod
     def _kill(p):
-        # mata o grupo inteiro (bash + sleep filho) para não deixar órfãos
+        # kill the whole group (bash + child sleep) so no orphans are left
         try:
             os.killpg(p.pid, signal.SIGKILL)
         except ProcessLookupError:
@@ -47,7 +47,7 @@ class ResumeFor(unittest.TestCase):
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.addCleanup(self._kill, p)
         want = os.path.basename(argv[0])
-        for _ in range(200):  # espera o exec terminar
+        for _ in range(200):  # wait for exec to finish
             cmd = procinfo.read_cmdline(p.pid)
             if cmd and os.path.basename(cmd[0]) == want:
                 break
@@ -82,7 +82,7 @@ class ResumeFor(unittest.TestCase):
 
     def test_claude_session_file(self):
         with tempfile.TemporaryDirectory() as d:
-            # um processo cujo argv[0] é "claude"
+            # a process whose argv[0] is "claude"
             p = subprocess.Popen(["bash", "-c", "exec -a claude sleep 300"], start_new_session=True,
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.addCleanup(self._kill, p)

@@ -1,4 +1,4 @@
-"""Um painel: VteTerminal + sessão (daemon ou local) + rastreamento do que roda."""
+"""A pane: VteTerminal + session (daemon or local) + tracking of what is running."""
 from __future__ import annotations
 
 import json
@@ -16,8 +16,9 @@ gi.require_version("Vte", "3.91")
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango, Vte  # noqa: E402
 
 from . import client, procinfo, protocol, session  # noqa: E402
+from .i18n import _, fmt_time  # noqa: E402
 
-# Paleta Nord (fundo, texto e 16 cores ANSI)
+# Nord palette (background, foreground and 16 ANSI colors)
 BASE_BG = "#2e3440"
 BASE_FG = "#d8dee9"
 PALETTE = [
@@ -29,16 +30,16 @@ ENV_DROP = {"CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SSE_PORT", "VTE
             "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "GIO_LAUNCHED_DESKTOP_FILE",
             "GIO_LAUNCHED_DESKTOP_FILE_PID"}
 
-# --- padrões clicáveis (Ctrl+clique) ---
+# --- clickable patterns (Ctrl+click) ---
 PCRE2_CASELESS, PCRE2_MULTILINE, PCRE2_UTF = 0x8, 0x400, 0x80000
 URL_RE = r"(?:https?|ftp|file)://[^\s<>\"'`]*[^\s<>\"'`.,;:!?)\]}]"
-# arquivo com extensão, opcionalmente :linha[:coluna]  (ex.: src/app.py:42:7, ./a.ts, ~/x.md)
-# ou qualquer caminho que comece com /, ./, ../ ou ~/ (ex.: /etc/hostname, ./Makefile)
+# file with an extension, optionally :line[:column]  (e.g. src/app.py:42:7, ./a.ts, ~/x.md)
+# or any path starting with /, ./, ../ or ~/ (e.g. /etc/hostname, ./Makefile)
 PATH_RE = (r"(?<![\w/.~-])(?:"
            r"(?:~/|\.{1,2}/|/)?(?:[\w.@+-]+/)*[\w@+-][\w.@+-]*\.[A-Za-z][A-Za-z0-9]{0,7}"
            r"|(?:~|\.{1,2})?/[\w@+-][\w.@+-]*(?:/[\w.@+-]+)*"
            r")(?::\d+(?::\d+)?)?")
-# traceback do Python: File "/x/y.py", line 42
+# Python traceback: File "/x/y.py", line 42
 PYTB_RE = r'File "[^"]+", line \d+'
 _PATH_SPLIT = re.compile(r"^(.*?)(?::(\d+))?(?::(\d+))?$")
 
@@ -50,7 +51,7 @@ def rgba(hexstr: str) -> Gdk.RGBA:
 
 
 def mix(a: str, b: str, t: float) -> str:
-    """Mistura duas cores hex: t=0 → a, t=1 → b."""
+    """Mixes two hex colors: t=0 → a, t=1 → b."""
     ca, cb = rgba(a), rgba(b)
     r = ca.red + (cb.red - ca.red) * t
     g = ca.green + (cb.green - ca.green) * t
@@ -59,7 +60,7 @@ def mix(a: str, b: str, t: float) -> str:
 
 
 def default_font(config: dict) -> Pango.FontDescription:
-    name = config.get("fonte")
+    name = config.get("font")
     if not name:
         try:
             name = Gio.Settings.new("org.gnome.desktop.interface").get_string("monospace-font-name")
@@ -69,7 +70,7 @@ def default_font(config: dict) -> Pango.FontDescription:
 
 
 def parse_link(text: str, tag_kind: str) -> tuple[str, int | None, int | None]:
-    """Converte o texto clicado em (caminho, linha, coluna)."""
+    """Converts the clicked text into (path, line, column)."""
     if tag_kind == "pytb":
         m = re.match(r'File "([^"]+)", line (\d+)', text)
         return (m.group(1), int(m.group(2)), None) if m else (text, None, None)
@@ -96,22 +97,22 @@ class Pane(Gtk.Box):
         self._pending_resume: dict | None = None
         self._pending_scrollback: str | None = None
         self._resume_typed = False
-        self.sock = None          # conexão com o matiz-daemon (modo daemon)
+        self.sock = None          # connection to matiz-daemon (daemon mode)
         self.dec = None
-        self.attached = False     # True se reconectou a uma sessão já viva
+        self.attached = False     # True if it reattached to a live session
         self._commit_id = None
         self._watch = None
         self._size = (0, 0)
         self._mute_until = 0.0
-        # notificações
-        self.busy_since: float | None = None   # comando em primeiro plano desde…
+        # notifications
+        self.busy_since: float | None = None   # foreground command since…
         self.busy_cmd: str | None = None
         self.claude_status: str | None = None
         self.claude_busy_since: float | None = None
 
         self.term = Vte.Terminal(hexpand=True, vexpand=True)
         self.term.set_font(default_font(self.config))
-        self.term.set_scrollback_lines(int(self.config.get("linhas_rolagem", 20000)))
+        self.term.set_scrollback_lines(int(self.config.get("scrollback_lines", 20000)))
         self.term.set_audible_bell(False)
         self.term.set_mouse_autohide(True)
         self.term.set_allow_hyperlink(True)
@@ -122,7 +123,7 @@ class Pane(Gtk.Box):
         self.term.connect("bell", lambda *_: self.window.on_pane_bell(self))
         self._setup_links()
 
-        # botão direito: foca este painel e mostra o menu (Copiar, Colar, Cor, Painéis…)
+        # right click: focus this pane and show the menu (Copy, Paste, Color, Panes…)
         self.term.set_context_menu_model(self.window.term_menu)
         rclick = Gtk.GestureClick(button=3)
         rclick.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
@@ -136,19 +137,19 @@ class Pane(Gtk.Box):
         scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, child=self.term)
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
-        # ✕ no canto: só aparece quando a aba está dividida (ver Tab._update_pane_marks)
-        self.close_btn = Gtk.Button(icon_name="window-close-symbolic", tooltip_text="Fechar painel (Ctrl+Shift+W)",
+        # ✕ in the corner: only shown when the tab is split (see Tab._update_pane_marks)
+        self.close_btn = Gtk.Button(icon_name="window-close-symbolic", tooltip_text=_("Close pane (Ctrl+Shift+W)"),
                                     halign=Gtk.Align.END, valign=Gtk.Align.START,
                                     margin_top=6, margin_end=16, focus_on_click=False, visible=False)
         self.close_btn.add_css_class("circular")
         self.close_btn.add_css_class("osd")
-        self.close_btn.add_css_class("matiz-fechar-painel")
+        self.close_btn.add_css_class("matiz-close-pane")
         self.close_btn.connect("clicked", lambda *_: self.window._close_pane(self))
         overlay = Gtk.Overlay(child=scroller, hexpand=True, vexpand=True)
         overlay.add_overlay(self.close_btn)
         self.append(overlay)
 
-    # ---------- aparência ----------
+    # ---------- appearance ----------
     def apply_color(self, color: str | None):
         bg = mix(BASE_BG, color, 0.13) if color else BASE_BG
         self.term.set_colors(rgba(BASE_FG), rgba(bg), [rgba(c) for c in PALETTE])
@@ -158,19 +159,22 @@ class Pane(Gtk.Box):
         cwd = self.cwd
         base = os.path.basename(cwd.rstrip("/")) or "/"
         if self.resume and self.resume.get("kind") == "claude":
-            return f"Claude · {base}"
+            # Translators: tab title while Claude Code runs; {dir} is the folder name
+            return _("Claude · {dir}").format(dir=base)
         if self.fg_name:
-            return f"{self.fg_name} · {base}"
-        return "Pasta pessoal" if cwd == home else base
+            # Translators: tab title; {program} is the running program, {dir} the folder name
+            return _("{program} · {dir}").format(program=self.fg_name, dir=base)
+        # Translators: tab title when the shell is in the home folder
+        return _("Home") if cwd == home else base
 
-    # ---------- links (Ctrl+clique) ----------
+    # ---------- links (Ctrl+click) ----------
     def _setup_links(self):
         self._link_tags: dict[int, str] = {}
         for kind, pat in (("url", URL_RE), ("pytb", PYTB_RE), ("path", PATH_RE)):
             try:
                 rx = Vte.Regex.new_for_match(pat, -1, PCRE2_MULTILINE | PCRE2_UTF)
             except GLib.Error as e:
-                print(f"matiz: regex {kind} inválida: {e.message}", file=sys.stderr)
+                print(f"matiz: invalid {kind} regex: {e.message}", file=sys.stderr)
                 continue
             tag = self.term.match_add_regex(rx, 0)
             self.term.match_set_cursor_name(tag, "pointer")
@@ -189,7 +193,7 @@ class Pane(Gtk.Box):
             gesture.set_state(Gtk.EventSequenceState.CLAIMED)
 
     def link_at(self, x, y):
-        """('url', uri) | ('file', path, linha, coluna) | None"""
+        """('url', uri) | ('file', path, line, column) | None"""
         try:
             uri = self.term.check_hyperlink_at(x, y)  # OSC 8
         except Exception:
@@ -213,14 +217,14 @@ class Pane(Gtk.Box):
         return ("file", path, line, col)
 
     def current_dir(self) -> str:
-        """Pasta do programa em primeiro plano (ou da shell)."""
+        """Directory of the foreground program (or of the shell)."""
         if self.shell_pid:
             fg = procinfo.foreground_pid_of(self.shell_pid)
             d = procinfo.read_cwd(fg) if fg else None
             return d or procinfo.read_cwd(self.shell_pid) or self.cwd
         return self.cwd
 
-    # ---------- processo ----------
+    # ---------- process ----------
     def _env(self) -> list[str]:
         env = {k: v for k, v in os.environ.items() if k not in ENV_DROP}
         env["MATIZ_TAB_ID"] = self.pane_id
@@ -238,10 +242,10 @@ class Pane(Gtk.Box):
                 self._start_daemon()
                 return
             except OSError as e:
-                print(f"matiz: daemon indisponível ({e}); usando modo local", file=sys.stderr)
+                print(f"matiz: daemon unavailable ({e}); using local mode", file=sys.stderr)
         self._start_local()
 
-    # --- modo local: o VTE é dono do PTY (processos morrem com a janela) ---
+    # --- local mode: VTE owns the PTY (processes die with the window) ---
     def _start_local(self):
         if self._pending_scrollback:
             self._feed_scrollback(self._pending_scrollback)
@@ -252,7 +256,7 @@ class Pane(Gtk.Box):
             GLib.SpawnFlags.DEFAULT, None, None, -1, None, self._on_spawned, None,
         )
 
-    # --- modo daemon: o matiz-daemon é dono do PTY (processos sobrevivem) ---
+    # --- daemon mode: matiz-daemon owns the PTY (processes survive) ---
     def _start_daemon(self):
         sock = client.connect()
         self.sock = sock
@@ -277,12 +281,12 @@ class Pane(Gtk.Box):
         try:
             self.sock.sendall(protocol.frame(kind, payload))
         except OSError:
-            pass  # a desconexão é tratada em _on_sock
+            pass  # disconnection is handled in _on_sock
 
     def _on_commit(self, _term, text, _size):
-        # Tudo que o VTE mandaria para o processo (teclas, colagem, respostas
-        # a consultas do terminal) vai para o daemon. Durante a reexibição do
-        # buffer, respostas a consultas antigas são descartadas.
+        # Everything VTE would send to the process (keys, paste, replies to
+        # terminal queries) goes to the daemon. While the buffer is being
+        # replayed, replies to old queries are dropped.
         if self.sock and time.monotonic() >= self._mute_until:
             self._send(b"I", text.encode("utf-8", "surrogateescape"))
 
@@ -309,7 +313,7 @@ class Pane(Gtk.Box):
                 self.shell_pid = info["pid"]
                 self.attached = bool(info.get("attached"))
                 if self.attached:
-                    # Reconectou: a sessão continua viva, nada a retomar.
+                    # Reattached: the session is still alive, nothing to resume.
                     self._pending_resume = None
                     self._pending_scrollback = None
                     self._mute_until = time.monotonic() + 0.6
@@ -326,7 +330,8 @@ class Pane(Gtk.Box):
                 return False
             elif kind == b"E":
                 msg = json.loads(payload).get("error", "?")
-                self.term.feed(f"\r\n\x1b[31mmatiz-daemon: {msg}\x1b[0m\r\n".encode())
+                text = _("matiz-daemon: {error}").format(error=msg)
+                self.term.feed(f"\r\n\x1b[31m{text}\x1b[0m\r\n".encode())
         return True
 
     def _close_sock(self):
@@ -338,13 +343,14 @@ class Pane(Gtk.Box):
         self.sock = None
 
     def _on_disconnect(self):
-        """O daemon caiu sem a shell ter saído: recria a sessão e retoma o
-        que estava rodando (mesma lógica de quando o PC reinicia)."""
+        """The daemon went away without the shell exiting: recreate the session
+        and resume what was running (same logic as after a reboot)."""
         self._close_sock()
         if self.window.quitting or self.exited:
             return
         self.shell_pid = None
-        self.term.feed(b"\r\n\x1b[33m-- conexao com o matiz-daemon perdida; recriando a sessao --\x1b[0m\r\n")
+        text = _("lost connection to matiz-daemon; recreating the session")
+        self.term.feed(f"\r\n\x1b[33m-- {text} --\x1b[0m\r\n".encode())
         resume = self.resume
         GLib.timeout_add(800, lambda: (self.start(cwd=self.cwd, resume=resume), False)[1])
 
@@ -356,9 +362,9 @@ class Pane(Gtk.Box):
             self._size = size
             self._send(b"R", json.dumps({"rows": size[0], "cols": size[1]}).encode())
 
-    # ---------- busca / limpar / exportar ----------
+    # ---------- search / clear / export ----------
     def set_search(self, text: str):
-        """Define a busca. Retorna True (ok), None (vazia) ou False (inválida)."""
+        """Sets the search. Returns True (ok), None (empty) or False (invalid)."""
         if not text:
             self.term.search_set_regex(None, 0)
             return None
@@ -374,9 +380,9 @@ class Pane(Gtk.Box):
     def clear(self):
         self.term.reset(True, True)
         if self.sock:
-            self._send(b"C")  # o daemon também esquece a saída guardada
+            self._send(b"C")  # the daemon also forgets the buffered output
         if not self.fg_name:
-            self.term.feed_child(b"\x0c")  # Ctrl+L: a shell redesenha o prompt
+            self.term.feed_child(b"\x0c")  # Ctrl+L: the shell redraws the prompt
         session.scrollback_path(self.pane_id).unlink(missing_ok=True)
 
     def full_text(self) -> str:
@@ -391,7 +397,7 @@ class Pane(Gtk.Box):
         return (text or "").rstrip() + "\n"
 
     def kill_session(self):
-        """Painel/aba fechado pelo usuário: encerra a sessão no daemon."""
+        """Pane/tab closed by the user: end the session in the daemon."""
         if self.sock:
             self._send(b"K")
             self._close_sock()
@@ -399,14 +405,18 @@ class Pane(Gtk.Box):
     def _feed_scrollback(self, text: str):
         lines = text.rstrip("\n").split("\n")
         body = "\r\n".join(lines)
-        stamp = time.strftime("%d/%m %H:%M")
-        banner = f"\x1b[38;2;136;192;208m── sessão restaurada ({stamp}) ──\x1b[0m"
+        # Translators: strftime format
+        stamp = fmt_time(time.time(), _("%Y-%m-%d %H:%M"))
+        # Translators: banner shown above the restored scrollback; {when} is a date/time
+        text = _("session restored ({when})").format(when=stamp)
+        banner = f"\x1b[38;2;136;192;208m── {text} ──\x1b[0m"
         self.term.feed(f"\x1b[2m{body}\x1b[0m\r\n{banner}\r\n".encode())
 
-    def _on_spawned(self, _term, pid, error, *_):
+    def _on_spawned(self, _term, pid, error, *_args):
         if error is not None or pid <= 0:
             msg = getattr(error, "message", str(error))
-            self.term.feed(f"\r\n\x1b[31mFalha ao iniciar a shell: {msg}\x1b[0m\r\n".encode())
+            text = _("Failed to start the shell: {error}").format(error=msg)
+            self.term.feed(f"\r\n\x1b[31m{text}\x1b[0m\r\n".encode())
             return
         self.shell_pid = pid
         if self._pending_resume:
@@ -429,7 +439,7 @@ class Pane(Gtk.Box):
             text = f"cd {shlex.quote(rcwd)} && {text}"
         if r.get("mode") == "run":
             text += "\n"
-            self.resume = r  # já conhecido; evita "piscar" antes da próxima sondagem
+            self.resume = r  # already known; avoids flicker before the next probe
         self.term.feed_child(text.encode())
         return False
 
@@ -439,19 +449,18 @@ class Pane(Gtk.Box):
         self.window.on_pane_exited(self)
 
     def probe(self, rerun, authoritative=False):
-        """Atualiza cwd/processo em primeiro plano/comando para retomar e
-        detecta eventos para notificação (comando longo terminou, Claude
-        terminou de responder)."""
+        """Updates cwd/foreground process/resume command and detects events
+        for notifications (long command finished, Claude finished replying)."""
         if not self.shell_pid or self.exited:
             return
         fg = procinfo.foreground_pid_of(self.shell_pid)
         cand = procinfo.resume_for(fg, rerun) if fg else None
         now = time.monotonic()
 
-        # --- comando longo terminou? ---
+        # --- did a long command finish? ---
         if fg and self.busy_since is None:
             self.busy_since = now
-            # o Claude fica em primeiro plano o tempo todo: tem aviso próprio
+            # Claude stays in the foreground all the time: it has its own notification
             is_claude = bool(cand and cand.get("kind") == "claude")
             self.busy_cmd = procinfo.command_line(cand["argv"]) if cand and not is_claude else None
         elif not fg and self.busy_since is not None:
@@ -461,7 +470,7 @@ class Pane(Gtk.Box):
             if cmd:
                 self.window.on_command_finished(self, cmd, took)
 
-        # --- Claude terminou de responder? ---
+        # --- did Claude finish replying? ---
         status = None
         if cand and cand.get("kind") == "claude":
             sess = procinfo.claude_session(fg)
@@ -478,8 +487,8 @@ class Pane(Gtk.Box):
             self._misses = 0
         else:
             self._misses += 1
-            # Durante desligamento os processos podem morrer antes de nós:
-            # só esquecemos o comando após várias sondagens sem ele.
+            # During shutdown processes may die before we do: only forget
+            # the command after several probes without it.
             if authoritative or self._misses >= 3:
                 self.resume = None
         self.fg_name = cand["label"] if cand else None
@@ -490,8 +499,8 @@ class Pane(Gtk.Box):
             self.cwd = shell_cwd
 
     def scrollback_text(self, max_lines: int) -> str | None:
-        """Texto da tela + histórico (sem cores). Não salva para apps que
-        redesenham a tela inteira ao retomar (Claude, vim, htop, ssh...)."""
+        """Screen text + scrollback (no colors). Not saved for apps that redraw
+        the whole screen when resumed (Claude, vim, htop, ssh...)."""
         if self.resume and self.resume.get("mode") == "run":
             return None
         try:
@@ -512,7 +521,7 @@ class Pane(Gtk.Box):
             return None
         lines = text.rstrip().split("\n")
         if len(lines) > 1:
-            lines = lines[:-1]  # remove o prompt vazio final
+            lines = lines[:-1]  # drop the trailing empty prompt
         return "\n".join(lines) if any(l.strip() for l in lines) else None
 
     def to_state(self) -> dict:

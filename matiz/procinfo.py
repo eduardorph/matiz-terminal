@@ -1,7 +1,7 @@
-"""Descobre o que está rodando em cada aba e como retomar depois.
+"""Finds out what is running in each tab and how to resume it later.
 
-Tudo aqui é leitura de /proc e de arquivos; nenhuma dependência de GTK,
-para poder ser testado isoladamente.
+Everything here reads /proc and files; no GTK dependency, so it can be
+tested in isolation.
 """
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ CLAUDE_SESSIONS = Path(
     os.environ.get("MATIZ_CLAUDE_SESSIONS", Path.home() / ".claude" / "sessions")
 )
 
-# Programas que podem ser reexecutados automaticamente ao restaurar.
-# Cada entrada é um prefixo de argv (comparado token a token).
+# Programs that may be re-run automatically on restore.
+# Each entry is an argv prefix (compared token by token).
 DEFAULT_RERUN = [
     ["ssh"], ["mosh"],
     ["vim"], ["nvim"], ["vi"], ["nano"], ["micro"], ["hx"],
@@ -27,12 +27,12 @@ DEFAULT_RERUN = [
     ["docker", "compose", "logs"], ["lazygit"], ["lazydocker"],
 ]
 
-# Nunca reexecutar sozinho, mesmo que o usuário adicione na config.
+# Never re-run automatically, even if the user adds them to the config.
 NEVER_RERUN = {"sudo", "su", "doas", "pkexec", "rm", "dd", "mkfs", "shutdown", "reboot"}
 
 SHELLS = {"bash", "zsh", "fish", "sh", "dash", "nu", "elvish", "xonsh"}
 
-# Flags do Claude Code que recebem valor e devem ser preservadas.
+# Claude Code flags that take a value and must be preserved.
 CLAUDE_VALUE_FLAGS = {
     "--model", "--permission-mode", "--add-dir", "--agent", "--agents",
     "--settings", "--setting-sources", "--mcp-config", "--allowedTools",
@@ -40,7 +40,7 @@ CLAUDE_VALUE_FLAGS = {
     "--append-system-prompt", "--system-prompt", "--fallback-model",
     "--plugin-dir", "--effort", "--output-style",
 }
-# Flags que escolhem/criam sessão: são descartadas e trocadas por --resume <id>.
+# Flags that pick/create a session: dropped and replaced by --resume <id>.
 CLAUDE_DROP_FLAGS = {"-c", "--continue", "--fork-session"}
 CLAUDE_DROP_VALUE_FLAGS = {"--session-id", "--from-pr", "--teleport"}
 CLAUDE_OPTIONAL_VALUE_FLAGS = {"-r", "--resume"}
@@ -76,7 +76,7 @@ def children(pid: int) -> list[int]:
 
 
 def foreground_pid(pty_fd: int, shell_pid: int) -> int | None:
-    """PID do líder do grupo em primeiro plano, ou None se for a própria shell."""
+    """PID of the foreground process group leader, or None if it is the shell itself."""
     try:
         pgid = os.tcgetpgrp(pty_fd)
     except OSError:
@@ -87,8 +87,8 @@ def foreground_pid(pty_fd: int, shell_pid: int) -> int | None:
 
 
 def foreground_pid_of(shell_pid: int) -> int | None:
-    """Mesmo que foreground_pid, mas sem precisar do PTY: lê o tpgid de
-    /proc/<pid>/stat (grupo em primeiro plano do terminal da shell)."""
+    """Same as foreground_pid, but without the PTY: reads tpgid from
+    /proc/<pid>/stat (the foreground group of the shell's terminal)."""
     try:
         stat = Path(f"/proc/{shell_pid}/stat").read_text()
         fields = stat[stat.rindex(")") + 2 :].split()
@@ -109,14 +109,14 @@ def is_claude(argv: list[str]) -> bool:
         return False
     if _basename(argv[0]) == "claude":
         return True
-    # Instalação via npm: node .../@anthropic-ai/claude-code/cli.js
+    # npm install: node .../@anthropic-ai/claude-code/cli.js
     return _basename(argv[0]).startswith("node") and any(
         "claude-code" in a or _basename(a) == "claude" for a in argv[1:2]
     )
 
 
 def claude_session(pid: int) -> dict | None:
-    """Lê ~/.claude/sessions/<pid>.json (ou de um filho direto)."""
+    """Reads ~/.claude/sessions/<pid>.json (or a direct child's)."""
     for p in [pid, *children(pid)]:
         f = CLAUDE_SESSIONS / f"{p}.json"
         try:
@@ -129,9 +129,9 @@ def claude_session(pid: int) -> dict | None:
 
 
 def claude_resume_argv(argv: list[str], session_id: str) -> list[str]:
-    """Reconstrói o comando do Claude mantendo as flags úteis e trocando a
-    seleção de sessão por --resume <id>. Prompts posicionais são descartados
-    para não reenviar mensagens."""
+    """Rebuilds the Claude command keeping useful flags and replacing the
+    session selection with --resume <id>. Positional prompts are dropped so
+    messages are not sent again."""
     out = [argv[0]] if _basename(argv[0]) == "claude" else ["claude"]
     args = argv[1:]
     if not _basename(argv[0]) == "claude":  # node cli.js ...
@@ -161,7 +161,7 @@ def claude_resume_argv(argv: list[str], session_id: str) -> list[str]:
             out.append(a)
             i += 1
         else:
-            i += 1  # posicional (prompt) — descarta
+            i += 1  # positional (prompt) — drop it
     return out + ["--resume", session_id]
 
 
@@ -172,14 +172,14 @@ def _matches(argv: list[str], prefix: list[str]) -> bool:
 
 
 def resume_for(pid: int, rerun: list[list[str]] | None = None) -> dict | None:
-    """Decide como retomar o processo em primeiro plano `pid`.
+    """Decides how to resume the foreground process `pid`.
 
-    Retorna {"argv", "mode": "run"|"suggest", "kind", "label", "cwd"} ou None.
+    Returns {"argv", "mode": "run"|"suggest", "kind", "label", "cwd"} or None.
     """
     argv = read_cmdline(pid)
     if not argv:
         return None
-    # Node (npm, pnpm…) reescreve o título do processo: "npm run dev" num só argumento.
+    # Node (npm, pnpm…) rewrites the process title: "npm run dev" as a single argument.
     if len(argv) == 1 and " " in argv[0] and not os.path.exists(argv[0]):
         argv = argv[0].split()
     cwd = read_cwd(pid)

@@ -1,69 +1,69 @@
 # Matiz
 
-Terminal para Linux/GNOME feito em Python com GTK 4, libadwaita e VTE (o mesmo motor de
-emulação do GNOME Terminal e do Ptyxis). Foi pensado para quem trabalha com agentes de IA
-no terminal: abas coloridas para identificar o que roda em cada uma, sessões que sobrevivem
-ao fechar a janela ou reiniciar o computador e um painel com o uso do Claude Code, OpenCode
-e Codex.
+A terminal for Linux/GNOME written in Python with GTK 4, libadwaita and VTE (the same
+emulation engine used by GNOME Terminal and Ptyxis). It is designed for people who work with
+AI agents in the terminal: colored tabs to tell at a glance what runs where, sessions that
+survive closing the window or rebooting the computer, and a panel with Claude Code, OpenCode
+and Codex usage.
 
-## Recursos
+## Features
 
-- **Abas coloridas.** Clique com o botão direito no título da aba (ou use `Ctrl+Alt+1…8`) para
-  escolher uma cor. Ela aparece na aba, numa faixa no topo, no fundo do terminal e na barra
-  da janela.
-- **Sessões persistentes.** Um processo em segundo plano (`matiz-daemon`) é dono das shells:
-  - ao **fechar a janela**, tudo continua rodando; ao reabrir, cada aba se reconecta e a tela
-    é reexibida;
-  - ao **reiniciar o computador**, o Matiz recria as abas a partir do estado salvo: o
-    Claude Code volta na mesma conversa (`claude --resume <id>`), programas seguros (ssh, vim,
-    htop, `npm run dev`…) são reexecutados e qualquer outro comando aparece digitado no prompt,
-    esperando seu Enter. Nada perigoso (`sudo`, `rm`…) é executado sozinho.
-- **Painéis.** Divida a aba lado a lado ou em cima/embaixo. Cada painel é uma sessão
-  independente e o layout é restaurado.
-- **Avisos.** Quando um comando demorado termina ou o Claude Code termina de responder numa aba
-  que você não está olhando, a aba fica destacada e, com a janela em segundo plano, aparece uma
-  notificação do sistema.
-- **Ctrl+clique** em URLs, caminhos e `arquivo:linha:coluna` (inclusive tracebacks do Python):
-  abre no navegador, no editor na linha certa ou no gerenciador de arquivos.
-- **Widget de uso de IA** na barra superior: sessões abertas, login, mensagens e tokens
-  (5 h / hoje / 7 dias), custo quando a ferramenta registra, gráfico das últimas 24 h e
-  **percentual dos limites do plano** (5 h / semanal). Tudo é lido de arquivos locais.
-- **Árvore de arquivos** (`Ctrl+Shift+B`) na lateral, acompanhando a pasta do painel ativo:
-  duplo clique abre o arquivo no editor; o botão direito oferece `cd`, inserir caminho no
-  terminal, nova aba na pasta, copiar caminho e mais.
-- Busca no histórico, salvar histórico em arquivo, abrir a pasta atual em outro aplicativo,
-  abas fixadas, menu com todos os atalhos (`Ctrl+?`).
+- **Colored tabs.** Right-click the tab title (or press `Ctrl+Alt+1…8`) to pick a color. It
+  shows up on the tab, as a stripe at the top, in the terminal background and in the window
+  header.
+- **Persistent sessions.** A background process (`matiz-daemon`) owns the shells:
+  - when you **close the window**, everything keeps running; when you reopen it, each tab
+    reconnects and the screen is redrawn;
+  - when you **reboot**, Matiz recreates the tabs from the saved state: Claude Code comes
+    back in the same conversation (`claude --resume <id>`), safe programs (ssh, vim, htop,
+    `npm run dev`…) are run again, and any other command is typed at the prompt, waiting for
+    your Enter. Nothing dangerous (`sudo`, `rm`…) is ever run automatically.
+- **Split panes.** Split a tab side by side or top/bottom. Each pane is an independent session
+  and the layout is restored.
+- **Notifications.** When a long-running command finishes, or Claude Code finishes replying,
+  in a tab you are not looking at, the tab is highlighted and, if the window is in the
+  background, a desktop notification is shown.
+- **Ctrl+click** on URLs, paths and `file:line:column` (including Python tracebacks): opens in
+  the browser, in your editor at the right line, or in the file manager.
+- **File tree** (`Ctrl+Shift+B`) in a sidebar, following the active pane's directory:
+  double-click opens a file in your editor; the context menu offers `cd`, insert path into the
+  terminal, new tab in that folder, copy path and more.
+- **AI usage widget** in the header bar: open sessions, login status, messages and tokens
+  (5h / today / 7 days), cost when the tool records it, a chart of the last 24 h and the
+  **percentage of your plan limits** (5h / weekly). Everything is read from local files.
+- Scrollback search, save scrollback to a file, open the current folder in another app,
+  pinned tabs, a menu with every shortcut (`Ctrl+?`).
 
-## Requisitos
+## Requirements
 
-- Linux com GTK ≥ 4.14 e libadwaita ≥ 1.8 (testado no Ubuntu 26.04 / GNOME 50)
-- Python ≥ 3.10 com PyGObject
-- VTE para GTK 4 (`Vte 3.91`)
+- Linux with GTK ≥ 4.14 and libadwaita ≥ 1.8 (tested on Ubuntu 26.04 / GNOME 50)
+- Python ≥ 3.10 with PyGObject
+- VTE for GTK 4 (`Vte 3.91`)
 
-No Debian/Ubuntu:
+On Debian/Ubuntu:
 
 ```bash
 sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-vte-3.91
 ```
 
-Não há dependências do PyPI.
+There are no PyPI dependencies.
 
-## Instalação
+## Installation
 
 ```bash
-git clone <url-do-repositorio> matiz
+git clone <repository-url> matiz
 cd matiz
 ./bin/matiz
 ```
 
-Para aparecer no menu de aplicativos, crie `~/.local/share/applications/dev.matiz.Terminal.desktop`
-(troque o caminho pelo local onde você clonou):
+To show it in the application menu, create `~/.local/share/applications/dev.matiz.Terminal.desktop`
+(replace the path with where you cloned it):
 
 ```ini
 [Desktop Entry]
 Name=Matiz
-Comment=Terminal com abas coloridas e sessão persistente
-Exec=/caminho/para/matiz/bin/matiz
+Comment=Terminal with colored tabs and persistent sessions
+Exec=/path/to/matiz/bin/matiz
 Icon=utilities-terminal
 Terminal=false
 Type=Application
@@ -71,7 +71,7 @@ Categories=System;TerminalEmulator;
 StartupWMClass=dev.matiz.Terminal
 ```
 
-Para abrir com `Ctrl+Alt+T` no GNOME, libere o atalho padrão e crie um personalizado:
+To open it with `Ctrl+Alt+T` on GNOME, free the default shortcut and create a custom one:
 
 ```bash
 K=org.gnome.settings-daemon.plugins.media-keys
@@ -83,127 +83,150 @@ gsettings set $K.custom-keybinding:$P binding '<Primary><Alt>t'
 gsettings set $K custom-keybindings "['$P']"
 ```
 
-## Atalhos
+## Shortcuts
 
-Todos também estão no menu ☰, no botão direito do título da aba e no botão direito dentro do
-terminal. `Ctrl+?` ou `F1` mostram a lista completa.
+They are also available in the ☰ menu, by right-clicking the tab title and by right-clicking
+inside the terminal. `Ctrl+?` or `F1` show the full list.
 
-| Ação | Atalho |
+| Action | Shortcut |
 |---|---|
-| Nova aba / nova aba nesta pasta | `Ctrl+Shift+T` / `Ctrl+Shift+D` |
-| Fechar painel (ou a aba, se for o único) | `Ctrl+Shift+W` ou o ✕ no canto do painel |
-| Dividir lado a lado / em cima e embaixo | `Alt+Shift++` / `Alt+Shift+-` |
-| Ir para o painel vizinho | `Alt+←` `↑` `→` `↓` |
-| Cor da aba / sem cor | `Ctrl+Alt+1…8` / `Ctrl+Alt+0` |
-| Renomear aba | `Ctrl+Shift+R` |
-| Copiar / colar | `Ctrl+Shift+C` / `Ctrl+Shift+V` |
-| Árvore de arquivos da pasta atual | `Ctrl+Shift+B` |
-| Abrir a pasta no gerenciador de arquivos | `Ctrl+Shift+E` |
-| Copiar caminho da pasta | `Ctrl+Shift+Y` |
-| Buscar no terminal | `Ctrl+Shift+F` (Enter ↑, Shift+Enter ↓, Esc fecha) |
-| Salvar histórico em arquivo | `Ctrl+Shift+S` |
-| Limpar tela e histórico | `Ctrl+Shift+K` |
-| Próxima / anterior aba | `Ctrl+PgDn` / `Ctrl+PgUp` |
-| Mover aba | `Ctrl+Shift+PgDn` / `Ctrl+Shift+PgUp` |
-| Ir para a aba N | `Alt+1…9` |
+| New tab / new tab in this folder | `Ctrl+Shift+T` / `Ctrl+Shift+D` |
+| Close pane (or the tab, if it is the only one) | `Ctrl+Shift+W` or the ✕ in the pane corner |
+| Split side by side / top and bottom | `Alt+Shift++` / `Alt+Shift+-` |
+| Go to neighboring pane | `Alt+←` `↑` `→` `↓` |
+| Tab color / no color | `Ctrl+Alt+1…8` / `Ctrl+Alt+0` |
+| Rename tab | `Ctrl+Shift+R` |
+| Copy / paste | `Ctrl+Shift+C` / `Ctrl+Shift+V` |
+| File tree for the current folder | `Ctrl+Shift+B` |
+| Open folder in the file manager | `Ctrl+Shift+E` |
+| Copy folder path | `Ctrl+Shift+Y` |
+| Search the terminal | `Ctrl+Shift+F` (Enter ↑, Shift+Enter ↓, Esc closes) |
+| Save scrollback to a file | `Ctrl+Shift+S` |
+| Clear screen and scrollback | `Ctrl+Shift+K` |
+| Next / previous tab | `Ctrl+PgDn` / `Ctrl+PgUp` |
+| Move tab | `Ctrl+Shift+PgDn` / `Ctrl+Shift+PgUp` |
+| Go to tab N | `Alt+1…9` |
 | Zoom | `Ctrl++` / `Ctrl+-` / `Ctrl+0` |
-| Abrir link ou arquivo:linha | `Ctrl+clique` |
+| Open link or file:line | `Ctrl+click` |
 
-## Widget de uso de IA
+## AI usage widget
 
-| Ferramenta | De onde vêm os dados |
+| Tool | Data source |
 |---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (tokens por mensagem) e `~/.claude/sessions/` (sessões abertas) |
-| OpenCode | `~/.local/share/opencode/opencode.db` (tokens e custo), aberto somente leitura |
-| Codex | `~/.codex/sessions/**/*.jsonl` (tokens e percentual dos limites do plano) |
+| Claude Code | `~/.claude/projects/**/*.jsonl` (tokens per message) and `~/.claude/sessions/` (open sessions) |
+| OpenCode | `~/.local/share/opencode/opencode.db` (tokens and cost), opened read-only |
+| Codex | `~/.codex/sessions/**/*.jsonl` (tokens and plan limit percentage) |
 
-O login é verificado com os comandos oficiais (`claude auth status`, `codex login status`); o
-botão **Entrar** abre uma aba com `claude auth login` / `codex login`. O Matiz não lê senhas
-nem tokens e não faz requisições de rede.
+Login status is checked with the official commands (`claude auth status`, `codex login status`);
+the **Log in** button opens a tab running `claude auth login` / `codex login`. Matiz does not
+read passwords or tokens and makes no network requests.
 
-**Limites do plano do Claude.** O Claude Code entrega o percentual dos limites (5 h, semanal…)
-somente ao comando configurado como barra de status (`statusLine`). No widget, o botão
-**Ativar** instala `bin/matiz-statusline` como intermediário em `~/.claude/settings.json`:
-ele anota os números para o Matiz e repassa a entrada, sem alteração, à barra de status que já
-existia. Antes de alterar, é criado um backup em `settings.json.matiz-bak`; **Desativar**
-restaura a configuração anterior. Se a pasta do Matiz for removida, o comando cai direto na
-barra de status original.
+**Claude plan limits.** Claude Code only exposes the plan limit percentages (5h, weekly…) to
+the command configured as its status line (`statusLine`). In the widget, the **Enable** button
+installs `bin/matiz-statusline` as a wrapper in `~/.claude/settings.json`: it records the
+numbers for Matiz and passes its input, unchanged, to the status line that was already
+configured. A backup is written to `settings.json.matiz-bak` before any change; **Disable**
+restores the previous setting. If the Matiz folder is removed, the command falls back to the
+original status line.
 
-## Configuração
+## Configuration
 
-Opcional, em `~/.config/matiz/config.json`:
+Optional, in `~/.config/matiz/config.json`:
 
 ```json
 {
-  "reexecutar_extra": [["python", "manage.py", "runserver"], ["docker", "compose", "up"]],
-  "persistir_processos": true,
-  "linhas_historico_salvas": 3000,
-  "linhas_rolagem": 20000,
-  "fonte": "JetBrains Mono 11",
-  "notificar_apos_segundos": 10,
-  "notificacoes": true,
+  "rerun_extra": [["python", "manage.py", "runserver"], ["docker", "compose", "up"]],
+  "persist_processes": true,
+  "saved_scrollback_lines": 3000,
+  "scrollback_lines": 20000,
+  "font": "JetBrains Mono 11",
+  "notify_after_seconds": 10,
+  "notifications": true,
   "editor": ["code", "--goto", "{file}:{line}:{col}"],
-  "widget_uso": true
+  "usage_widget": true,
+  "language": "en"
 }
 ```
 
-| Chave | Efeito |
+| Key | Effect |
 |---|---|
-| `reexecutar_extra` | Comandos (prefixos de argv) que podem ser reexecutados sozinhos ao restaurar |
-| `persistir_processos` | `false` desliga o daemon: os processos morrem ao fechar a janela |
-| `linhas_historico_salvas` | Linhas de histórico gravadas em disco por painel |
-| `fonte` | Fonte do terminal (padrão: a monoespaçada do sistema) |
-| `notificar_apos_segundos` | Duração mínima de um comando para gerar aviso |
-| `editor` | Comando para abrir `arquivo:linha` no Ctrl+clique (padrão: VS Code, Cursor, Zed ou Sublime, o que estiver instalado) |
-| `widget_uso` | `false` esconde o widget de uso |
+| `rerun_extra` | Commands (argv prefixes) that may be re-run automatically on restore |
+| `persist_processes` | `false` disables the daemon: processes die when the window closes |
+| `saved_scrollback_lines` | Scrollback lines written to disk per pane |
+| `scrollback_lines` | Scrollback lines kept in memory per pane |
+| `font` | Terminal font (default: the system monospace font) |
+| `notify_after_seconds` | Minimum command duration that triggers a notification |
+| `notifications` | `false` disables desktop notifications |
+| `editor` | Command used to open `file:line` on Ctrl+click (default: VS Code, Cursor, Zed or Sublime, whichever is installed) |
+| `usage_widget` | `false` hides the usage widget |
+| `language` | Forces the interface language (e.g. `"en"`, `"pt_BR"`); by default the system language is used |
 
-## Como funciona
+## How it works
 
 ```
-Matiz (janela GTK)  ──socket Unix──▶  matiz-daemon  ──▶  um PTY por painel → shell → programas
+Matiz (GTK window)  ──Unix socket──▶  matiz-daemon  ──▶  one PTY per pane → shell → programs
 ```
 
-| Arquivo | Papel |
+| File | Role |
 |---|---|
-| `matiz/app.py` | Janela, abas, menus, atalhos, avisos, ciclo salvar/restaurar |
-| `matiz/tab.py` | Aba: cor, título e árvore de painéis (`Gtk.Paned`) |
-| `matiz/pane.py` | Painel: `Vte.Terminal`, conexão com o daemon, links, detecção do que está rodando |
-| `matiz/daemon.py` | Daemon que mantém os PTYs vivos e guarda a saída recente para reexibir |
-| `matiz/protocol.py` | Protocolo binário simples entre janela e daemon |
-| `matiz/procinfo.py` | Leitura de `/proc`: processo em primeiro plano, pasta, como retomar cada programa |
-| `matiz/session.py` | Estado em disco (gravação atômica) e configuração |
-| `matiz/filetree.py` | Árvore de arquivos lateral |
-| `matiz/usage.py`, `matiz/usage_ui.py` | Coleta e exibição do uso de IA |
-| `matiz/claude_limits.py`, `bin/matiz-statusline` | Limites do plano do Claude via `statusLine` |
+| `matiz/app.py` | Window, tabs, menus, shortcuts, notifications, save/restore cycle |
+| `matiz/tab.py` | Tab: color, title and pane tree (`Gtk.Paned`) |
+| `matiz/pane.py` | Pane: `Vte.Terminal`, daemon connection, links, detection of what is running |
+| `matiz/daemon.py` | Daemon that keeps PTYs alive and buffers recent output for redrawing |
+| `matiz/protocol.py` | Simple binary protocol between window and daemon |
+| `matiz/procinfo.py` | Reads `/proc`: foreground process, working directory, how to resume each program |
+| `matiz/session.py` | On-disk state (atomic writes) and configuration |
+| `matiz/i18n.py`, `po/`, `locale/` | Translations (gettext) |
+| `matiz/filetree.py` | File tree sidebar |
+| `matiz/usage.py`, `matiz/usage_ui.py` | AI usage collection and display |
+| `matiz/claude_limits.py`, `bin/matiz-statusline` | Claude plan limits via `statusLine` |
 
-Arquivos gerados em tempo de execução (nenhum fica dentro do repositório):
+Files created at runtime (none of them inside the repository):
 
-| Caminho | Conteúdo |
+| Path | Contents |
 |---|---|
-| `~/.local/state/matiz/session.json` | Abas, cores, layout dos painéis, comando para retomar |
-| `~/.local/state/matiz/scrollback/` | Histórico de texto de cada painel |
-| `~/.local/state/matiz/claude-limits.json` | Últimos percentuais dos limites do Claude |
-| `$XDG_RUNTIME_DIR/matiz/` | Socket e log do daemon |
+| `~/.local/state/matiz/session.json` | Tabs, colors, pane layout, command to resume |
+| `~/.local/state/matiz/scrollback/` | Text scrollback of each pane |
+| `~/.local/state/matiz/claude-limits.json` | Latest Claude plan limit percentages |
+| `$XDG_RUNTIME_DIR/matiz/` | Daemon socket and log |
 
-O estado é gravado a cada 2 s de forma atômica, ao fechar a janela e ao receber SIGTERM.
+State is written atomically every 2 s, when the window closes and on SIGTERM.
 
-## Limitações
+## Limitations
 
-- Reiniciar o computador encerra os processos: o Matiz recria as sessões, mas uma resposta que
-  o Claude estava gerando naquele momento é interrompida.
-- A reexibição da tela ao reconectar usa os últimos 4 MB de saída de cada painel.
-- Depois de atualizar o código, feche todas as abas para que um daemon novo seja iniciado.
-- Uma janela por vez.
+- Rebooting ends the processes: Matiz recreates the sessions, but a reply Claude was
+  generating at that moment is interrupted.
+- Redrawing the screen on reconnect uses the last 4 MB of output of each pane.
+- After updating the code, close all tabs so a new daemon is started.
+- One window at a time.
 
-## Testes
+## Translations
+
+The interface follows the system language (`LANGUAGE` / `LANG`) and falls back to English.
+Available: English and Brazilian Portuguese (`pt_BR`).
+
+Source strings are English and marked with `_()` / `ngettext()` (see `matiz/i18n.py`).
+Translations live in `po/<lang>.po` and are compiled to `locale/<lang>/LC_MESSAGES/matiz.mo`.
+Requires the gettext tools (`sudo apt install gettext`).
+
+```bash
+tools/update-translations            # after changing strings: update .pot/.po and recompile
+tools/update-translations --new fr   # start a new translation in po/fr.po
+```
+
+Then translate the `msgstr` entries in `po/<lang>.po` (with any text editor or a PO editor
+such as Poedit/Gtranslator) and run `tools/update-translations` again. The tests check that
+every translation is complete, keeps the placeholders and is compiled.
+
+## Tests
 
 ```bash
 python3 -m unittest discover -s tests
 ```
 
-Os testes do daemon e da detecção de processos criam processos de verdade e usam diretórios
-temporários; nenhum toca na configuração do usuário.
+The daemon and process detection tests spawn real processes and use temporary directories;
+none of them touch the user's configuration.
 
-## Licença
+## License
 
 [MIT](LICENSE) © 2026 Eduardo Freitas

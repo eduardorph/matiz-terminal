@@ -1,11 +1,12 @@
-"""Limites do plano do Claude (5 h / semana) pelo mecanismo oficial statusLine.
+"""Claude plan limits (5h / weekly) through the official statusLine mechanism.
 
-O Claude Code envia ao comando da barra de status um JSON com
-`rate_limits.five_hour`, `seven_day` etc. Instalamos um intermediário que
-anota esses números num arquivo e repassa a entrada, sem alteração, para a
-barra de status que o usuário já tinha (ex.: a do Orca).
+Claude Code sends the status line command a JSON payload with
+`rate_limits.five_hour`, `seven_day`, etc. We install a wrapper that records
+those numbers to a file and passes the input, unchanged, to the status line
+the user already had (e.g. Orca's).
 
-Nada é instalado sem o usuário pedir (botão no widget). Há backup e desfazer.
+Nothing is installed unless the user asks (button in the widget). A backup is
+kept and the change can be undone.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ import time
 from pathlib import Path
 
 from . import session
+from .i18n import N_
 
 SETTINGS = Path(os.environ.get("MATIZ_CLAUDE_SETTINGS", Path.home() / ".claude" / "settings.json"))
 LIMITS_FILE = session.STATE_DIR / "claude-limits.json"
@@ -26,9 +28,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WRAPPER = PROJECT_ROOT / "bin" / "matiz-statusline"
 MARK = "matiz-statusline"
 
+# Stored in English (claude-limits.json); translated only when displayed.
 NAMES = {
-    "five_hour": "5 h", "seven_day": "Semanal", "seven_day_opus": "Semanal (Opus)",
-    "seven_day_sonnet": "Semanal (Sonnet)", "seven_day_oauth_apps": "Semanal (apps)",
+    # Translators: plan limit window names (5-hour window, weekly window…)
+    "five_hour": N_("5h"), "seven_day": N_("Weekly"), "seven_day_opus": N_("Weekly (Opus)"),
+    "seven_day_sonnet": N_("Weekly (Sonnet)"), "seven_day_oauth_apps": N_("Weekly (apps)"),
 }
 
 
@@ -54,7 +58,7 @@ def enable() -> None:
     session.atomic_write(ORIGINAL_FILE, json.dumps({"statusLine": current}, ensure_ascii=False, indent=2))
     new = dict(current) if isinstance(current, dict) else {"type": "command"}
     new["type"] = "command"
-    # Se o Matiz for movido/apagado, cai direto na barra de status original.
+    # If Matiz is moved/deleted, fall back to the original status line.
     orig_cmd = (current or {}).get("command") if isinstance(current, dict) else None
     fallback = orig_cmd if orig_cmd and orig_cmd.strip() else "cat >/dev/null"
     new["command"] = (f"if [ -f '{WRAPPER}' ]; then exec '{sys.executable}' '{WRAPPER}'; "
@@ -85,12 +89,24 @@ def original_command() -> str | None:
     return cmd if isinstance(cmd, str) and cmd.strip() else None
 
 
+_LEGACY_NAMES = {"5 h": "5h", "Semanal": "Weekly", "Semanal (Opus)": "Weekly (Opus)",
+                 "Semanal (Sonnet)": "Weekly (Sonnet)", "Semanal (apps)": "Weekly (apps)"}
+
+
 def read_limits() -> dict | None:
-    """{"atualizado": epoch, "disponivel": bool, "janelas": [{"nome","pct","reinicia"}]}"""
+    """{"updated": epoch, "available": bool, "windows": [{"key","name","pct","resets_at"}]}"""
     try:
-        return json.loads(LIMITS_FILE.read_text())
+        data = json.loads(LIMITS_FILE.read_text())
     except (OSError, ValueError):
         return None
+    if isinstance(data, dict) and "janelas" in data:  # legacy file written by older versions
+        data = {
+            "updated": data.get("atualizado"),
+            "available": data.get("disponivel", True),
+            "windows": [{"key": w.get("chave"), "name": NAMES.get(w.get("chave"), _LEGACY_NAMES.get(w.get("nome"), w.get("nome"))),
+                         "pct": w.get("pct"), "resets_at": w.get("reinicia")} for w in data.get("janelas", [])],
+        }
+    return data
 
 
 def _parse_reset(v):
@@ -109,30 +125,30 @@ def extract(payload: dict) -> dict | None:
     rl = payload.get("rate_limits")
     avail = payload.get("rate_limits_available")
     if not isinstance(rl, dict):
-        return {"atualizado": time.time(), "disponivel": bool(avail), "janelas": []} if avail is not None else None
-    janelas = []
+        return {"updated": time.time(), "available": bool(avail), "windows": []} if avail is not None else None
+    windows = []
     for key, w in rl.items():
         if not isinstance(w, dict):
             continue
         pct = w.get("used_percentage", w.get("percent", w.get("utilization")))
         if pct is None:
             continue
-        janelas.append({"chave": key, "nome": NAMES.get(key, key.replace("_", " ")),
-                        "pct": float(pct), "reinicia": _parse_reset(w.get("resets_at"))})
+        windows.append({"key": key, "name": NAMES.get(key, key.replace("_", " ")),
+                        "pct": float(pct), "resets_at": _parse_reset(w.get("resets_at"))})
     order = list(NAMES)
-    janelas.sort(key=lambda j: order.index(j["chave"]) if j["chave"] in order else 99)
-    return {"atualizado": time.time(), "disponivel": True if avail is None else bool(avail), "janelas": janelas}
+    windows.sort(key=lambda w: order.index(w["key"]) if w["key"] in order else 99)
+    return {"updated": time.time(), "available": True if avail is None else bool(avail), "windows": windows}
 
 
 def statusline_main() -> int:
-    """Executado pelo Claude Code a cada atualização da barra de status."""
+    """Run by Claude Code on every status line update."""
     data = sys.stdin.buffer.read()
     try:
         info = extract(json.loads(data or b"{}"))
         if info is not None:
             session.atomic_write(LIMITS_FILE, json.dumps(info))
     except Exception:
-        pass  # nunca atrapalha a barra de status
+        pass  # never break the status line
     orig = original_command()
     if not orig:
         return 0
@@ -141,12 +157,12 @@ def statusline_main() -> int:
     return res.returncode
 
 
-# ---------------- login (comandos oficiais) ----------------
+# ---------------- login (official commands) ----------------
 _auth_cache: dict[str, tuple[float, dict | None]] = {}
 
 
 def auth_status(tool: str) -> dict | None:
-    """{"conectado": bool, "plano": str|None}. Nunca devolve e-mail ou tokens."""
+    """{"logged_in": bool, "plan": str|None}. Never returns e-mail or tokens."""
     hit = _auth_cache.get(tool)
     if hit and time.time() - hit[0] < 300:
         return hit[1]
@@ -155,13 +171,13 @@ def auth_status(tool: str) -> dict | None:
         if tool == "claude" and shutil.which("claude"):
             r = subprocess.run(["claude", "auth", "status", "--json"], capture_output=True, text=True, timeout=15)
             d = json.loads(r.stdout or "{}")
-            plano = d.get("subscriptionType") or ("API" if d.get("authMethod") == "apiKey" else None)
-            out = {"conectado": bool(d.get("loggedIn")), "plano": plano}
+            plan = d.get("subscriptionType") or ("API" if d.get("authMethod") == "apiKey" else None)
+            out = {"logged_in": bool(d.get("loggedIn")), "plan": plan}
         elif tool == "codex" and shutil.which("codex"):
             r = subprocess.run(["codex", "login", "status"], capture_output=True, text=True, timeout=15)
             txt = (r.stdout + r.stderr).lower()
-            out = {"conectado": r.returncode == 0 and "not logged" not in txt,
-                   "plano": "ChatGPT" if "chatgpt" in txt else ("API" if "api key" in txt else None)}
+            out = {"logged_in": r.returncode == 0 and "not logged" not in txt,
+                   "plan": "ChatGPT" if "chatgpt" in txt else ("API" if "api key" in txt else None)}
     except (OSError, ValueError, subprocess.TimeoutExpired):
         out = None
     _auth_cache[tool] = (time.time(), out)

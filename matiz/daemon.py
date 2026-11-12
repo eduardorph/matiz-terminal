@@ -1,8 +1,8 @@
-"""matiz-daemon: mantém as shells vivas quando a janela do Matiz fecha.
+"""matiz-daemon: keeps the shells alive when the Matiz window closes.
 
-Cada aba é uma sessão com um PTY próprio. O daemon guarda os últimos
-bytes de saída de cada sessão para reexibi-los quando a janela reconecta.
-Sai sozinho quando não há mais sessões nem clientes.
+Each pane is a session with its own PTY. The daemon keeps the most recent
+output bytes of each session to replay them when the window reconnects.
+It exits on its own when there are no sessions or clients left.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ import time
 from . import protocol as P
 
 BUFFER_BYTES = int(os.environ.get("MATIZ_BUFFER_BYTES", 4 * 1024 * 1024))
-IDLE_EXIT_S = 5.0          # sem sessões nem clientes por este tempo → sai
+IDLE_EXIT_S = 5.0          # no sessions or clients for this long → exit
 CLIENT_MAX_PENDING = 32 * 1024 * 1024
 
 
@@ -50,13 +50,13 @@ class Session:
         self.buf = bytearray()
         self.truncated = False
         self.clients: set[Client] = set()
-        self.wq = bytearray()  # entrada pendente para o PTY
+        self.wq = bytearray()  # pending input for the PTY
         self.size = (rows, cols)
         pid, fd = pty.fork()
-        if pid == 0:  # filho
-            # Sinais ignorados são herdados pelo exec: restaura o padrão, senão
-            # Ctrl+C (SIGINT), fechar a aba (SIGHUP) e pipes (SIGPIPE) não
-            # funcionariam nos programas da aba.
+        if pid == 0:  # child
+            # Ignored signals are inherited across exec: restore the defaults,
+            # otherwise Ctrl+C (SIGINT), closing the tab (SIGHUP) and pipes
+            # (SIGPIPE) would not work for the programs in the tab.
             for sig in (signal.SIGHUP, signal.SIGINT, signal.SIGQUIT, signal.SIGTERM,
                         signal.SIGPIPE, signal.SIGCHLD, signal.SIGTSTP, signal.SIGTTIN, signal.SIGTTOU):
                 signal.signal(sig, signal.SIG_DFL)
@@ -117,7 +117,7 @@ class Session:
     def replay(self) -> bytes:
         data = bytes(self.buf)
         if self.truncated:
-            # começa numa linha inteira para não cortar sequências de escape
+            # start at a full line so escape sequences are not cut
             nl = data.find(b"\n")
             data = data[nl + 1 :] if nl >= 0 else b""
         return data
@@ -130,7 +130,7 @@ class Session:
             pass
 
     def nudge(self):
-        """Força os programas de tela cheia (Claude, vim…) a redesenharem."""
+        """Forces full-screen programs (Claude, vim…) to redraw."""
         rows, cols = self.size
         try:
             set_winsize(self.fd, rows, max(1, cols - 1))
@@ -144,8 +144,8 @@ class Session:
             pass
 
     def kill(self):
-        # SIGHUP no grupo em primeiro plano (ex.: claude, npm) e na shell,
-        # como um terminal faz ao fechar. SIGKILL depois, para quem ignorar.
+        # SIGHUP to the foreground group (e.g. claude, npm) and to the shell,
+        # like a terminal does when closing. SIGKILL later for anything that ignores it.
         groups = {self.pid}
         try:
             groups.add(os.tcgetpgrp(self.fd))
@@ -247,7 +247,7 @@ class Client:
         if kind == b"H":
             req = json.loads(payload)
             if req.get("proto") != P.PROTO:
-                self.send(P.jframe(b"E", {"error": "versão de protocolo diferente"}))
+                self.send(P.jframe(b"E", {"error": "protocol version mismatch"}))
                 return
             sid = req["id"]
             sess = self.daemon.sessions.get(sid)
@@ -355,16 +355,16 @@ class Daemon:
                     self.path.unlink()
             except OSError:
                 pass
-            # Encerramento do daemon (ex.: desligar o PC): fecha os PTYs sem
-            # avisar "shell saiu" aos clientes — para a janela isso é uma
-            # desconexão, e o estado salvo das abas é preservado.
+            # Daemon shutdown (e.g. powering off): close the PTYs without
+            # telling clients "shell exited" — for the window this is a
+            # disconnect, and the saved tab state is preserved.
             for c in list(self.clients):
                 c.session = None
                 c.close()
             for s in list(self.sessions.values()):
                 s.clients.clear()
                 s.kill()
-            # dá até 1 s para saírem com SIGHUP; quem sobrar leva SIGKILL
+            # give them up to 1 s to exit on SIGHUP; anything left gets SIGKILL
             end = time.monotonic() + 1.0
             while self.pending_kill and time.monotonic() < end:
                 self.reap()
@@ -400,7 +400,7 @@ class Daemon:
 
 def main():
     path = P.socket_path()
-    # Já existe um daemon respondendo? Então não faz nada.
+    # Is a daemon already answering? Then do nothing.
     probe = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         probe.connect(str(path))
@@ -415,7 +415,7 @@ def main():
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        return 0  # outro daemon está subindo
+        return 0  # another daemon is starting
     Daemon(path).serve()
     return 0
 

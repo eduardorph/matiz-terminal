@@ -19,17 +19,17 @@ class Links(unittest.TestCase):
         self.assertEqual(find(pane.URL_RE, "(http://x.io/p)"), ["http://x.io/p"])
 
     def test_paths(self):
-        t = "erro em src/app.py:42:7 e ./README.md, também ~/notas.txt e /etc/hosts.conf:3"
+        t = "error in src/app.py:42:7 and ./README.md, also ~/notes.txt and /etc/hosts.conf:3"
         self.assertEqual(find(pane.PATH_RE, t),
-                         ["src/app.py:42:7", "./README.md", "~/notas.txt", "/etc/hosts.conf:3"])
+                         ["src/app.py:42:7", "./README.md", "~/notes.txt", "/etc/hosts.conf:3"])
 
     def test_paths_without_extension(self):
-        self.assertEqual(find(pane.PATH_RE, "ver /etc/hostname:1 e ./Makefile ou ~/bin/deploy"),
+        self.assertEqual(find(pane.PATH_RE, "see /etc/hostname:1 and ./Makefile or ~/bin/deploy"),
                          ["/etc/hostname:1", "./Makefile", "~/bin/deploy"])
-        self.assertEqual(find(pane.PATH_RE, "e/ou isto"), [])
+        self.assertEqual(find(pane.PATH_RE, "and/or this"), [])
 
     def test_path_ignores_numbers(self):
-        self.assertEqual(find(pane.PATH_RE, "versão 1.5 custou 3.14"), [])
+        self.assertEqual(find(pane.PATH_RE, "version 1.5 cost 3.14"), [])
 
     def test_python_traceback(self):
         t = 'File "/home/u/x.py", line 12, in main'

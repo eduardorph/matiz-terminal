@@ -1,4 +1,4 @@
-"""Uma aba: faixa colorida + árvore de painéis (divisões com Gtk.Paned)."""
+"""A tab: colored stripe + tree of panes (splits with Gtk.Paned)."""
 from __future__ import annotations
 
 import os
@@ -9,7 +9,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .pane import Pane, mix  # noqa: E402,F401  (mix reexportado para app.py)
+from .i18n import _  # noqa: E402
+from .pane import Pane, mix  # noqa: E402,F401  (mix re-exported for app.py)
 
 
 def dot_icon(hexstr: str) -> Gio.Icon:
@@ -25,7 +26,7 @@ _stripe_colors: set[str] = set()
 
 
 def _color_class(hexstr: str) -> str:
-    """Classe CSS para a cor (registra a regra na primeira vez)."""
+    """CSS class for the color (registers the rule the first time)."""
     global _stripe_css
     hexstr = hexstr.lower()
     if _stripe_css is None:
@@ -36,9 +37,9 @@ def _color_class(hexstr: str) -> str:
     if hexstr not in _stripe_colors:
         _stripe_colors.add(hexstr)
         _stripe_css.load_from_string("".join(
-            f".matiz-stripe.cor-{c[1:]} {{ background-color: {c}; }}" for c in sorted(_stripe_colors)
+            f".matiz-stripe.color-{c[1:]} {{ background-color: {c}; }}" for c in sorted(_stripe_colors)
         ))
-    return f"cor-{hexstr[1:]}"
+    return f"color-{hexstr[1:]}"
 
 
 class Tab(Gtk.Box):
@@ -49,7 +50,7 @@ class Tab(Gtk.Box):
         self.tab_id = tab_id or uuid.uuid4().hex
         self.color: str | None = color
         self.custom_title: str | None = custom_title
-        self.page = None  # Adw.TabPage, definido pela janela
+        self.page = None  # Adw.TabPage, set by the window
         self.active: Pane | None = None
 
         self.stripe = Gtk.Box(hexpand=True, height_request=4)
@@ -58,7 +59,7 @@ class Tab(Gtk.Box):
         self.content = Gtk.Box(hexpand=True, vexpand=True)
         self.append(self.content)
 
-    # ---------- árvore de painéis ----------
+    # ---------- pane tree ----------
     def _root(self):
         return self.content.get_first_child()
 
@@ -107,7 +108,7 @@ class Tab(Gtk.Box):
         paned.set_end_child(b)
         paned._matiz_ratio = ratio
 
-        # aplica a proporção quando o tamanho real for conhecido
+        # apply the ratio once the real size is known
         def apply(*_):
             total = paned.get_width() if orientation == Gtk.Orientation.HORIZONTAL else paned.get_height()
             if total <= 1:
@@ -119,7 +120,7 @@ class Tab(Gtk.Box):
         return paned
 
     def build(self, layout: dict | None, scrollbacks: dict, *, start=True):
-        """Monta a árvore a partir do layout salvo e inicia as sessões."""
+        """Builds the tree from the saved layout and starts the sessions."""
         def make(node):
             if not node or "pane" in node or "split" not in node:
                 st = (node or {}).get("pane", node or {})
@@ -136,10 +137,10 @@ class Tab(Gtk.Box):
         self.active = panes[0] if panes else None
 
     def split(self, pane: Pane, horizontal: bool) -> Pane:
-        """horizontal=True → lado a lado; False → em cima/embaixo."""
+        """horizontal=True → side by side; False → top/bottom."""
         new = self._new_pane({"cwd": pane.current_dir()})
         orient = Gtk.Orientation.HORIZONTAL if horizontal else Gtk.Orientation.VERTICAL
-        holder = Gtk.Box()  # segura o lugar enquanto o painel é movido
+        holder = Gtk.Box()  # holds the slot while the pane is moved
         self._replace(pane, holder)
         paned = self._make_paned(orient, pane, new)
         self._replace(holder, paned)
@@ -150,7 +151,7 @@ class Tab(Gtk.Box):
         return new
 
     def remove_pane(self, pane: Pane) -> bool:
-        """Tira o painel da árvore. Retorna True se a aba ficou vazia."""
+        """Removes the pane from the tree. Returns True if the tab became empty."""
         parent = pane.get_parent()
         if not isinstance(parent, Gtk.Paned):
             return True
@@ -167,7 +168,7 @@ class Tab(Gtk.Box):
         return False
 
     def focus_dir(self, dx: int, dy: int):
-        """Move o foco para o painel vizinho na direção (dx, dy)."""
+        """Moves focus to the neighboring pane in direction (dx, dy)."""
         cur = self.active
         if not cur:
             return
@@ -183,7 +184,7 @@ class Tab(Gtk.Box):
             vx, vy = q.x - cx, q.y - cy
             if (dx and vx * dx <= 0) or (dy and vy * dy <= 0):
                 continue
-            # distância no eixo pedido + penalidade pelo desvio no outro eixo
+            # distance along the requested axis + penalty for drift on the other axis
             d = (abs(vx) + 2 * abs(vy)) if dx else (abs(vy) + 2 * abs(vx))
             if best_d is None or d < best_d:
                 best, best_d = p, d
@@ -200,9 +201,9 @@ class Tab(Gtk.Box):
         for p in self.panes():
             p.close_btn.set_visible(many)
             if many and p is self.active:
-                p.add_css_class("matiz-pane-ativo")
+                p.add_css_class("matiz-pane-active")
             else:
-                p.remove_css_class("matiz-pane-ativo")
+                p.remove_css_class("matiz-pane-active")
 
     def layout_state(self) -> dict | None:
         def node(w):
@@ -218,7 +219,7 @@ class Tab(Gtk.Box):
 
         return node(self._root())
 
-    # ---------- aparência ----------
+    # ---------- appearance ----------
     @property
     def cwd(self) -> str:
         return self.active.cwd if self.active else os.path.expanduser("~")
@@ -230,7 +231,7 @@ class Tab(Gtk.Box):
     def apply_color(self):
         for p in self.panes():
             p.apply_color(self.color)
-        for cls in [c for c in self.stripe.get_css_classes() if c.startswith("cor-")]:
+        for cls in [c for c in self.stripe.get_css_classes() if c.startswith("color-")]:
             self.stripe.remove_css_class(cls)
         if self.color:
             self.stripe.add_css_class(_color_class(self.color))
@@ -247,7 +248,9 @@ class Tab(Gtk.Box):
             return self.custom_title
         base = self.active.display_title() if self.active else "Matiz"
         n = len(self.panes())
-        return f"{base}  (+{n - 1})" if n > 1 else base
+        # Translators: tab title when the tab is split; {title} is the active pane title,
+        # {n} how many other panes there are
+        return _("{title}  (+{n})").format(title=base, n=n - 1) if n > 1 else base
 
     def refresh_title(self):
         if self.page is not None:

@@ -1,0 +1,802 @@
+# Portuguese translations for matiz package.
+# Copyright (C) 2026 THE matiz'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the matiz package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: matiz\n"
+"Report-Msgid-Bugs-To: https://github.com/eduardorph/matiz-terminal/issues\n"
+"PO-Revision-Date: 2026-11-11 00:00-0300\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Portuguese (Brazil)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: matiz/app.py:30
+msgid "Red"
+msgstr "Vermelho"
+
+#: matiz/app.py:31
+msgid "Orange"
+msgstr "Laranja"
+
+#: matiz/app.py:32
+msgid "Yellow"
+msgstr "Amarelo"
+
+#: matiz/app.py:33
+msgid "Green"
+msgstr "Verde"
+
+#: matiz/app.py:34
+msgid "Blue"
+msgstr "Azul"
+
+#: matiz/app.py:35
+msgid "Purple"
+msgstr "Roxo"
+
+#: matiz/app.py:36
+msgid "Pink"
+msgstr "Rosa"
+
+#: matiz/app.py:37
+msgid "Gray"
+msgstr "Cinza"
+
+#: matiz/app.py:92
+msgid "New tab (Ctrl+Shift+T)"
+msgstr "Nova aba (Ctrl+Shift+T)"
+
+#: matiz/app.py:95
+msgid "Split side by side (Alt+Shift++)"
+msgstr "Dividir lado a lado (Alt+Shift++)"
+
+#: matiz/app.py:99
+msgid "File tree (Ctrl+Shift+B)"
+msgstr "Árvore de arquivos (Ctrl+Shift+B)"
+
+#: matiz/app.py:102
+msgid "Menu (F10)"
+msgstr "Menu (F10)"
+
+#: matiz/app.py:154
+msgid "Custom…"
+msgstr "Personalizada…"
+
+#: matiz/app.py:155 matiz/app.py:467
+msgid "No color"
+msgstr "Sem cor"
+
+#: matiz/app.py:158
+msgid "Color"
+msgstr "Cor"
+
+#: matiz/app.py:159
+msgid "Rename…"
+msgstr "Renomear…"
+
+#: matiz/app.py:160
+msgid "Pin / unpin tab"
+msgstr "Fixar / desafixar aba"
+
+#: matiz/app.py:164 matiz/app.py:469
+msgid "Split side by side"
+msgstr "Dividir lado a lado"
+
+#: matiz/app.py:165 matiz/app.py:469
+msgid "Split top / bottom"
+msgstr "Dividir em cima / embaixo"
+
+#: matiz/app.py:166
+msgid "Close pane"
+msgstr "Fechar painel"
+
+#: matiz/app.py:170
+msgid "Open folder with"
+msgstr "Abrir pasta com"
+
+#: matiz/app.py:171 matiz/app.py:475
+msgid "Copy folder path"
+msgstr "Copiar caminho da pasta"
+
+#: matiz/app.py:172 matiz/app.py:460 matiz/filetree.py:203
+msgid "New tab in this folder"
+msgstr "Nova aba nesta pasta"
+
+#: matiz/app.py:176
+msgid "Search…"
+msgstr "Buscar…"
+
+#: matiz/app.py:177
+msgid "Save scrollback to file…"
+msgstr "Salvar histórico em arquivo…"
+
+#: matiz/app.py:178 matiz/app.py:478
+msgid "Clear screen and scrollback"
+msgstr "Limpar tela e histórico"
+
+#: matiz/app.py:182
+msgid "Close other tabs"
+msgstr "Fechar outras abas"
+
+#: matiz/app.py:183
+msgid "Close tab"
+msgstr "Fechar aba"
+
+#: matiz/app.py:190 matiz/app.py:460
+msgid "New tab"
+msgstr "Nova aba"
+
+#: matiz/app.py:193
+msgid "File tree"
+msgstr "Árvore de arquivos"
+
+#: matiz/app.py:203 matiz/app.py:484
+msgid "Keyboard shortcuts"
+msgstr "Atalhos de teclado"
+
+#: matiz/app.py:212
+msgid "Copy"
+msgstr "Copiar"
+
+#: matiz/app.py:213
+msgid "Paste"
+msgstr "Colar"
+
+#: matiz/app.py:233
+msgid "Other application…"
+msgstr "Outro aplicativo…"
+
+#: matiz/app.py:421
+msgid "Tab color"
+msgstr "Cor da aba"
+
+#: matiz/app.py:439 matiz/app.py:461
+msgid "Rename tab"
+msgstr "Renomear aba"
+
+#: matiz/app.py:440
+msgid "Leave empty to go back to the automatic title."
+msgstr "Deixe vazio para voltar ao título automático."
+
+#: matiz/app.py:442 matiz/usage_ui.py:305
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: matiz/app.py:443
+msgid "Rename"
+msgstr "Renomear"
+
+#: matiz/app.py:459
+msgid "Tabs"
+msgstr "Abas"
+
+#: matiz/app.py:461
+msgid "Close pane / tab"
+msgstr "Fechar painel / aba"
+
+#: matiz/app.py:462
+msgid "Next / previous"
+msgstr "Próxima / anterior"
+
+#: matiz/app.py:463
+msgid "Move tab"
+msgstr "Mover aba"
+
+#: matiz/app.py:464
+msgid "Go to tab 1…9"
+msgstr "Ir para a aba 1…9"
+
+#: matiz/app.py:466
+msgid "Colors"
+msgstr "Cores"
+
+#: matiz/app.py:468
+msgid "Panes"
+msgstr "Painéis"
+
+#: matiz/app.py:470
+msgid "Go to neighboring pane"
+msgstr "Ir para o painel vizinho"
+
+#: matiz/app.py:472
+msgid "Folder and scrollback"
+msgstr "Pasta e histórico"
+
+#: matiz/app.py:473
+msgid "Show/hide file tree"
+msgstr "Mostrar/esconder árvore de arquivos"
+
+#: matiz/app.py:474
+msgid "Open folder in file manager"
+msgstr "Abrir pasta no gerenciador de arquivos"
+
+#: matiz/app.py:476
+msgid "Search in terminal"
+msgstr "Buscar no terminal"
+
+#: matiz/app.py:477
+msgid "Save scrollback to file"
+msgstr "Salvar histórico em arquivo"
+
+#. Translators: section title in the keyboard shortcuts dialog
+#: matiz/app.py:481
+msgid "Terminal"
+msgstr "Terminal"
+
+#: matiz/app.py:482
+msgid "Copy / paste"
+msgstr "Copiar / colar"
+
+#: matiz/app.py:483
+msgid "Zoom"
+msgstr "Zoom"
+
+#: matiz/app.py:493
+msgid "Mouse"
+msgstr "Mouse"
+
+#: matiz/app.py:494
+msgid "Open link or file:line (Ctrl+click)"
+msgstr "Abrir link ou arquivo:linha (Ctrl+clique)"
+
+#: matiz/app.py:495
+msgid "Tab menu: right-click the tab title"
+msgstr "Menu da aba: botão direito no título da aba"
+
+#: matiz/app.py:544
+msgid "No application to open folders"
+msgstr "Nenhum aplicativo para abrir pastas"
+
+#. Translators: {name} is a folder name, {app} an application name
+#: matiz/app.py:550
+#, python-brace-format
+msgid "Opening {name} with {app}"
+msgstr "Abrindo {name} com {app}"
+
+#: matiz/app.py:553
+#, python-brace-format
+msgid "Failed to open: {error}"
+msgstr "Falha ao abrir: {error}"
+
+#: matiz/app.py:576 matiz/filetree.py:261
+#, python-brace-format
+msgid "Copied: {path}"
+msgstr "Copiado: {path}"
+
+#: matiz/app.py:587
+msgid "Save scrollback"
+msgstr "Salvar histórico"
+
+#: matiz/app.py:599
+#, python-brace-format
+msgid "Scrollback saved to {file}"
+msgstr "Histórico salvo em {file}"
+
+#: matiz/app.py:601
+#, python-brace-format
+msgid "Failed to save: {error}"
+msgstr "Falha ao salvar: {error}"
+
+#. Translators: {file} is a file name, {line} a line number
+#: matiz/app.py:623
+#, python-brace-format
+msgid "Opening {file}:{line}"
+msgstr "Abrindo {file}:{line}"
+
+#: matiz/app.py:625
+#, python-brace-format
+msgid "Opening {file}"
+msgstr "Abrindo {file}"
+
+#: matiz/app.py:628
+#, python-brace-format
+msgid "Failed to open editor: {error}"
+msgstr "Falha ao abrir o editor: {error}"
+
+#. Translators: notification title; {command} is the command that finished
+#: matiz/app.py:666
+#, python-brace-format
+msgid "Finished: {command}"
+msgstr "Terminou: {command}"
+
+#: matiz/app.py:667 matiz/app.py:672
+#, python-brace-format
+msgid "{tab} · {duration}"
+msgstr "{tab} · {duration}"
+
+#: matiz/app.py:670
+msgid "Claude finished responding"
+msgstr "Claude terminou de responder"
+
+#: matiz/app.py:670
+msgid "Claude needs you"
+msgstr "Claude precisa de você"
+
+#: matiz/app.py:679
+msgid "Terminal bell"
+msgstr "Alerta no terminal"
+
+#: matiz/app.py:696
+msgid "Search in terminal…"
+msgstr "Buscar no terminal…"
+
+#: matiz/app.py:697
+msgid "Previous (Enter)"
+msgstr "Anterior (Enter)"
+
+#: matiz/app.py:698
+msgid "Next (Shift+Enter)"
+msgstr "Próxima (Shift+Enter)"
+
+#: matiz/app.py:857
+#, python-brace-format
+msgid "{n} tab"
+msgid_plural "{n} tabs"
+msgstr[0] "{n} aba"
+msgstr[1] "{n} abas"
+
+#: matiz/app.py:859
+#, python-brace-format
+msgid "{n} pane"
+msgid_plural "{n} panes"
+msgstr[0] "{n} painel"
+msgstr[1] "{n} painéis"
+
+#. Translators: duration in seconds
+#: matiz/app.py:1017
+#, python-brace-format
+msgid "{s}s"
+msgstr "{s} s"
+
+#. Translators: duration in minutes and seconds
+#: matiz/app.py:1021
+#, python-brace-format
+msgid "{m}m {s:02d}s"
+msgstr "{m} min {s:02d} s"
+
+#. Translators: duration in hours and minutes
+#: matiz/app.py:1024
+#, python-brace-format
+msgid "{h}h {m:02d}m"
+msgstr "{h} h {m:02d} min"
+
+#. Translators: plan limit window names (5-hour window, weekly window…)
+#. Translators: very short names for the 5-hour and weekly limits in the header bar
+#: matiz/claude_limits.py:34 matiz/usage_ui.py:132
+msgid "5h"
+msgstr "5 h"
+
+#: matiz/claude_limits.py:34 matiz/usage.py:301
+msgid "Weekly"
+msgstr "Semanal"
+
+#: matiz/claude_limits.py:34
+msgid "Weekly (Opus)"
+msgstr "Semanal (Opus)"
+
+#: matiz/claude_limits.py:35
+msgid "Weekly (Sonnet)"
+msgstr "Semanal (Sonnet)"
+
+#: matiz/claude_limits.py:35
+msgid "Weekly (apps)"
+msgstr "Semanal (apps)"
+
+#: matiz/filetree.py:65
+msgid "Up one level"
+msgstr "Subir um nível"
+
+#: matiz/filetree.py:66
+msgid "Show hidden files"
+msgstr "Mostrar arquivos ocultos"
+
+#: matiz/filetree.py:68
+msgid "Follow the terminal directory"
+msgstr "Seguir a pasta do terminal"
+
+#: matiz/filetree.py:191
+msgid "Open"
+msgstr "Abrir"
+
+#: matiz/filetree.py:192 matiz/filetree.py:202
+msgid "Insert path in terminal"
+msgstr "Inserir caminho no terminal"
+
+#: matiz/filetree.py:195 matiz/filetree.py:208
+msgid "Copy path"
+msgstr "Copiar caminho"
+
+#: matiz/filetree.py:196
+msgid "Show in folder"
+msgstr "Mostrar na pasta"
+
+#: matiz/filetree.py:201
+msgid "Go to this folder in the terminal (cd)"
+msgstr "Ir para esta pasta no terminal (cd)"
+
+#: matiz/filetree.py:204
+msgid "Use as tree root"
+msgstr "Usar como raiz da árvore"
+
+#: matiz/filetree.py:207
+msgid "Open in file manager"
+msgstr "Abrir no gerenciador de arquivos"
+
+#. Translators: {program} is the running program; quoted text is a menu item
+#: matiz/filetree.py:245
+#, python-brace-format
+msgid "A program is running ({program}); use “New tab in this folder”"
+msgstr "Há um programa rodando ({program}); use “Nova aba nesta pasta”"
+
+#: matiz/pane.py:141
+msgid "Close pane (Ctrl+Shift+W)"
+msgstr "Fechar painel (Ctrl+Shift+W)"
+
+#. Translators: tab title while Claude Code runs; {dir} is the folder name
+#: matiz/pane.py:163
+#, python-brace-format
+msgid "Claude · {dir}"
+msgstr "Claude · {dir}"
+
+#. Translators: tab title; {program} is the running program, {dir} the folder name
+#: matiz/pane.py:166
+#, python-brace-format
+msgid "{program} · {dir}"
+msgstr "{program} · {dir}"
+
+#. Translators: tab title when the shell is in the home folder
+#: matiz/pane.py:168
+msgid "Home"
+msgstr "Pasta pessoal"
+
+#: matiz/pane.py:333
+#, python-brace-format
+msgid "matiz-daemon: {error}"
+msgstr "matiz-daemon: {error}"
+
+#: matiz/pane.py:352
+msgid "lost connection to matiz-daemon; recreating the session"
+msgstr "conexão com o matiz-daemon perdida; recriando a sessão"
+
+#. Translators: strftime format
+#: matiz/pane.py:409
+msgid "%Y-%m-%d %H:%M"
+msgstr "%d/%m/%Y %H:%M"
+
+#. Translators: banner shown above the restored scrollback; {when} is a date/time
+#: matiz/pane.py:411
+#, python-brace-format
+msgid "session restored ({when})"
+msgstr "sessão restaurada ({when})"
+
+#: matiz/pane.py:418
+#, python-brace-format
+msgid "Failed to start the shell: {error}"
+msgstr "Falha ao iniciar a shell: {error}"
+
+#. Translators: tab title when the tab is split; {title} is the active pane title,
+#. {n} how many other panes there are
+#: matiz/tab.py:253
+#, python-brace-format
+msgid "{title}  (+{n})"
+msgstr "{title}  (+{n})"
+
+#: matiz/usage.py:221
+msgid "Plan limits do not apply to this login (API key, Bedrock or Vertex)."
+msgstr ""
+"Limites do plano não se aplicam a este login (chave de API, Bedrock ou "
+"Vertex)."
+
+#: matiz/usage.py:242
+#, python-brace-format
+msgid "Could not read the database: {error}"
+msgstr "Não foi possível ler o banco de dados: {error}"
+
+#: matiz/usage.py:301
+msgid "Short window"
+msgstr "Janela curta"
+
+#: matiz/usage.py:336
+#, python-brace-format
+msgid "Read error: {error}"
+msgstr "Erro de leitura: {error}"
+
+#. Translators: billions of tokens, e.g. "1.9B"; {n} is already formatted
+#: matiz/usage.py:364
+#, python-brace-format
+msgid "{n}B"
+msgstr "{n} bi"
+
+#. Translators: millions of tokens, e.g. "3.4M"; {n} is already formatted
+#: matiz/usage.py:367
+#, python-brace-format
+msgid "{n}M"
+msgstr "{n} mi"
+
+#. Translators: thousands of tokens, e.g. "1.2k"; {n} is already formatted
+#: matiz/usage.py:370
+#, python-brace-format
+msgid "{n}k"
+msgstr "{n} mil"
+
+#: matiz/usage_ui.py:45
+msgid "never"
+msgstr "nunca"
+
+#: matiz/usage_ui.py:48
+msgid "just now"
+msgstr "agora há pouco"
+
+#: matiz/usage_ui.py:51
+#, python-brace-format
+msgid "{n} minute ago"
+msgid_plural "{n} minutes ago"
+msgstr[0] "há {n} minuto"
+msgstr[1] "há {n} minutos"
+
+#: matiz/usage_ui.py:54
+#, python-brace-format
+msgid "{n} hour ago"
+msgid_plural "{n} hours ago"
+msgstr[0] "há {n} hora"
+msgstr[1] "há {n} horas"
+
+#. Translators: strftime format for a past date, e.g. "on 2026-09-28"
+#: matiz/usage_ui.py:56
+msgid "on %Y-%m-%d"
+msgstr "em %d/%m/%Y"
+
+#. Translators: limit window of N hours, e.g. "5h"
+#: matiz/usage_ui.py:64
+#, python-brace-format
+msgid "{n}h"
+msgstr "{n} h"
+
+#. Translators: limit window of N days, e.g. "3d"
+#: matiz/usage_ui.py:68
+#, python-brace-format
+msgid "{n}d"
+msgstr "{n} d"
+
+#: matiz/usage_ui.py:74
+msgid "AI usage (Claude Code, OpenCode, Codex…)"
+msgstr "Uso de IA (Claude Code, OpenCode, Codex…)"
+
+#. Translators: short label of the AI usage button in the header bar
+#: matiz/usage_ui.py:82 matiz/usage_ui.py:126
+msgid "AI"
+msgstr "IA"
+
+#: matiz/usage_ui.py:89
+msgid "Loading…"
+msgstr "Carregando…"
+
+#: matiz/usage_ui.py:132
+msgid "7d"
+msgstr "7d"
+
+#: matiz/usage_ui.py:133
+#, python-brace-format
+msgid "{name} {pct}%"
+msgstr "{name} {pct}%"
+
+#: matiz/usage_ui.py:149
+#, python-brace-format
+msgid "{tool}: {n} open session"
+msgid_plural "{tool}: {n} open sessions"
+msgstr[0] "{tool}: {n} sessão aberta"
+msgstr[1] "{tool}: {n} sessões abertas"
+
+#: matiz/usage_ui.py:152
+#, python-brace-format
+msgid "{sessions}, {n} working"
+msgstr "{sessions}, {n} trabalhando"
+
+#: matiz/usage_ui.py:154
+msgid "AI usage — click for details"
+msgstr "Uso de IA — clique para detalhes"
+
+#: matiz/usage_ui.py:163
+msgid "No AI tools found."
+msgstr "Nenhuma ferramenta de IA encontrada."
+
+#. Translators: strftime format for the time of the last refresh
+#: matiz/usage_ui.py:168
+msgid "%H:%M:%S"
+msgstr "%H:%M:%S"
+
+#: matiz/usage_ui.py:169
+#, python-brace-format
+msgid "Updated at {time} · data read from disk, nothing is sent"
+msgstr "Atualizado às {time} · dados lidos do disco, nada é enviado"
+
+#: matiz/usage_ui.py:171
+msgid "Refresh"
+msgstr "Atualizar"
+
+#: matiz/usage_ui.py:187
+#, python-brace-format
+msgid "{n} open"
+msgid_plural "{n} open"
+msgstr[0] "{n} aberta"
+msgstr[1] "{n} abertas"
+
+#: matiz/usage_ui.py:189
+#, python-brace-format
+msgid "{open} · {n} working"
+msgstr "{open} · {n} trabalhando"
+
+#: matiz/usage_ui.py:191
+msgid "not installed"
+msgstr "não instalado"
+
+#: matiz/usage_ui.py:193
+#, python-brace-format
+msgid "last used {when}"
+msgstr "último uso {when}"
+
+#: matiz/usage_ui.py:200
+msgid "No usage in the last 7 days."
+msgstr "Sem uso nos últimos 7 dias."
+
+#: matiz/usage_ui.py:207
+#, python-brace-format
+msgid "Models (7 days): {models}"
+msgstr "Modelos (7 dias): {models}"
+
+#. Translators: {name} is a limit window name such as "5h" or "Weekly"
+#: matiz/usage_ui.py:215
+#, python-brace-format
+msgid "{name} limit"
+msgstr "Limite {name}"
+
+#: matiz/usage_ui.py:223
+msgid "%b %d %H:%M"
+msgstr "%d/%m %H:%M"
+
+#. Translators: strftime format for when a limit resets
+#: matiz/usage_ui.py:223
+#, python-brace-format
+msgid "{pct} · resets {when}"
+msgstr "{pct} · zera {when}"
+
+#: matiz/usage_ui.py:231
+#, python-brace-format
+msgid "Limits updated {when} (on every agent reply)"
+msgstr "Limites atualizados {when} (a cada resposta do agente)"
+
+#: matiz/usage_ui.py:245
+msgid "Not installed"
+msgstr "Não instalado"
+
+#: matiz/usage_ui.py:245
+#, python-brace-format
+msgid "To install: {command}"
+msgstr "Para instalar: {command}"
+
+#: matiz/usage_ui.py:250
+msgid "Login: —"
+msgstr "Login: —"
+
+#: matiz/usage_ui.py:253
+#, python-brace-format
+msgid "✓ Logged in · {plan} plan"
+msgstr "✓ Conectado · plano {plan}"
+
+#: matiz/usage_ui.py:255
+msgid "✓ Logged in"
+msgstr "✓ Conectado"
+
+#: matiz/usage_ui.py:258
+msgid "Not logged in"
+msgstr "Não conectado"
+
+#: matiz/usage_ui.py:260
+msgid "Log in"
+msgstr "Entrar"
+
+#: matiz/usage_ui.py:260
+msgid "Switch account"
+msgstr "Trocar conta"
+
+#: matiz/usage_ui.py:278
+msgid "Plan limits: shown after Claude's next reply."
+msgstr "Limites do plano: aparecem após a próxima resposta do Claude."
+
+#: matiz/usage_ui.py:280
+msgid "Disable"
+msgstr "Desativar"
+
+#: matiz/usage_ui.py:286
+msgid ""
+"Plan limits (5h / weekly) disabled — Orca may have rewritten the setting."
+msgstr ""
+"Limites do plano (5 h / semanal) desativados — o Orca pode ter reescrito a "
+"configuração."
+
+#: matiz/usage_ui.py:287
+msgid "Show plan limits (5h / weekly)"
+msgstr "Ver limites do plano (5 h / semanal)"
+
+#: matiz/usage_ui.py:289 matiz/usage_ui.py:306
+msgid "Enable"
+msgstr "Ativar"
+
+#: matiz/usage_ui.py:299
+msgid "Show Claude plan limits?"
+msgstr "Mostrar limites do plano do Claude?"
+
+#: matiz/usage_ui.py:300
+msgid ""
+"Claude Code reports its plan limits (5h and weekly) to the status line "
+"command. Matiz will install a wrapper there that records the numbers and "
+"passes everything on to your current status line (Orca's keeps working).\n"
+"\n"
+"This changes ~/.claude/settings.json (backed up to settings.json.matiz-bak). "
+"No password or token is read. You can disable it at any time."
+msgstr ""
+"O Claude Code informa os limites do plano (5 h e semanal) ao comando da "
+"barra de status. O Matiz vai instalar ali um intermediário que anota os "
+"números e repassa tudo para a sua barra de status atual (a do Orca continua "
+"funcionando).\n"
+"\n"
+"Isso altera ~/.claude/settings.json (backup em settings.json.matiz-bak). "
+"Nenhuma senha ou token é lido. Dá para desativar a qualquer momento."
+
+#: matiz/usage_ui.py:322
+msgid "7 days"
+msgstr "7 dias"
+
+#: matiz/usage_ui.py:322
+msgid "Last 5h"
+msgstr "Últimas 5 h"
+
+#: matiz/usage_ui.py:322
+msgid "Today"
+msgstr "Hoje"
+
+#: matiz/usage_ui.py:326
+msgid "Messages"
+msgstr "Mensagens"
+
+#: matiz/usage_ui.py:327
+msgid "Output tokens"
+msgstr "Tokens de saída"
+
+#: matiz/usage_ui.py:328
+msgid "Input"
+msgstr "Entrada"
+
+#: matiz/usage_ui.py:329
+msgid "Cache reads"
+msgstr "Lidos do cache"
+
+#: matiz/usage_ui.py:333
+#, python-brace-format
+msgid "${amount}"
+msgstr "US$ {amount}"
+
+#. Translators: cost in US dollars; {amount} is already formatted (e.g. "1.25")
+#: matiz/usage_ui.py:333
+msgid "Cost"
+msgstr "Custo"
+
+#. Translators: tooltip of an hourly usage bar, e.g. "14h: 1.2M tokens"
+#: matiz/usage_ui.py:356
+#, python-brace-format
+msgid "{hour}h: {tokens} tokens"
+msgstr "{hour}h: {tokens} tokens"
+
+#: matiz/usage_ui.py:360
+msgid "24 h ago"
+msgstr "24 h atrás"
+
+#: matiz/usage_ui.py:361
+msgid "now"
+msgstr "agora"

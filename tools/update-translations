@@ -1,0 +1,29 @@
+#!/bin/sh
+# Extracts translatable strings to po/matiz.pot, merges them into every
+# po/<lang>.po and compiles locale/<lang>/LC_MESSAGES/matiz.mo.
+#
+#   tools/update-translations            update everything
+#   tools/update-translations --new fr   start a new translation (po/fr.po)
+set -e
+cd "$(dirname "$0")/.."
+
+xgettext --language=Python --from-code=UTF-8 \
+  --keyword=_ --keyword=N_ --keyword=ngettext:1,2 \
+  --add-comments=Translators --sort-by-file \
+  --package-name=matiz --msgid-bugs-address="https://github.com/eduardorph/matiz-terminal/issues" \
+  -o po/matiz.pot matiz/*.py
+# deterministic header (no creation date churn in git)
+sed -i '/^"POT-Creation-Date:/d' po/matiz.pot
+
+if [ "$1" = "--new" ] && [ -n "$2" ]; then
+  msginit --no-translator --locale="$2" --input=po/matiz.pot --output-file="po/$2.po"
+fi
+
+for po in po/*.po; do
+  [ -e "$po" ] || continue
+  lang=$(basename "$po" .po)
+  msgmerge --quiet --update --backup=none --no-fuzzy-matching "$po" po/matiz.pot
+  mkdir -p "locale/$lang/LC_MESSAGES"
+  msgfmt --check -o "locale/$lang/LC_MESSAGES/matiz.mo" "$po"
+  printf '%s: ' "$lang"; msgfmt --statistics -o /dev/null "$po"
+done

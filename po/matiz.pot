@@ -1,0 +1,792 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the matiz package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: matiz\n"
+"Report-Msgid-Bugs-To: https://github.com/eduardorph/matiz-terminal/issues\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: matiz/app.py:30
+msgid "Red"
+msgstr ""
+
+#: matiz/app.py:31
+msgid "Orange"
+msgstr ""
+
+#: matiz/app.py:32
+msgid "Yellow"
+msgstr ""
+
+#: matiz/app.py:33
+msgid "Green"
+msgstr ""
+
+#: matiz/app.py:34
+msgid "Blue"
+msgstr ""
+
+#: matiz/app.py:35
+msgid "Purple"
+msgstr ""
+
+#: matiz/app.py:36
+msgid "Pink"
+msgstr ""
+
+#: matiz/app.py:37
+msgid "Gray"
+msgstr ""
+
+#: matiz/app.py:92
+msgid "New tab (Ctrl+Shift+T)"
+msgstr ""
+
+#: matiz/app.py:95
+msgid "Split side by side (Alt+Shift++)"
+msgstr ""
+
+#: matiz/app.py:99
+msgid "File tree (Ctrl+Shift+B)"
+msgstr ""
+
+#: matiz/app.py:102
+msgid "Menu (F10)"
+msgstr ""
+
+#: matiz/app.py:154
+msgid "Custom…"
+msgstr ""
+
+#: matiz/app.py:155 matiz/app.py:467
+msgid "No color"
+msgstr ""
+
+#: matiz/app.py:158
+msgid "Color"
+msgstr ""
+
+#: matiz/app.py:159
+msgid "Rename…"
+msgstr ""
+
+#: matiz/app.py:160
+msgid "Pin / unpin tab"
+msgstr ""
+
+#: matiz/app.py:164 matiz/app.py:469
+msgid "Split side by side"
+msgstr ""
+
+#: matiz/app.py:165 matiz/app.py:469
+msgid "Split top / bottom"
+msgstr ""
+
+#: matiz/app.py:166
+msgid "Close pane"
+msgstr ""
+
+#: matiz/app.py:170
+msgid "Open folder with"
+msgstr ""
+
+#: matiz/app.py:171 matiz/app.py:475
+msgid "Copy folder path"
+msgstr ""
+
+#: matiz/app.py:172 matiz/app.py:460 matiz/filetree.py:203
+msgid "New tab in this folder"
+msgstr ""
+
+#: matiz/app.py:176
+msgid "Search…"
+msgstr ""
+
+#: matiz/app.py:177
+msgid "Save scrollback to file…"
+msgstr ""
+
+#: matiz/app.py:178 matiz/app.py:478
+msgid "Clear screen and scrollback"
+msgstr ""
+
+#: matiz/app.py:182
+msgid "Close other tabs"
+msgstr ""
+
+#: matiz/app.py:183
+msgid "Close tab"
+msgstr ""
+
+#: matiz/app.py:190 matiz/app.py:460
+msgid "New tab"
+msgstr ""
+
+#: matiz/app.py:193
+msgid "File tree"
+msgstr ""
+
+#: matiz/app.py:203 matiz/app.py:484
+msgid "Keyboard shortcuts"
+msgstr ""
+
+#: matiz/app.py:212
+msgid "Copy"
+msgstr ""
+
+#: matiz/app.py:213
+msgid "Paste"
+msgstr ""
+
+#: matiz/app.py:233
+msgid "Other application…"
+msgstr ""
+
+#: matiz/app.py:421
+msgid "Tab color"
+msgstr ""
+
+#: matiz/app.py:439 matiz/app.py:461
+msgid "Rename tab"
+msgstr ""
+
+#: matiz/app.py:440
+msgid "Leave empty to go back to the automatic title."
+msgstr ""
+
+#: matiz/app.py:442 matiz/usage_ui.py:305
+msgid "Cancel"
+msgstr ""
+
+#: matiz/app.py:443
+msgid "Rename"
+msgstr ""
+
+#: matiz/app.py:459
+msgid "Tabs"
+msgstr ""
+
+#: matiz/app.py:461
+msgid "Close pane / tab"
+msgstr ""
+
+#: matiz/app.py:462
+msgid "Next / previous"
+msgstr ""
+
+#: matiz/app.py:463
+msgid "Move tab"
+msgstr ""
+
+#: matiz/app.py:464
+msgid "Go to tab 1…9"
+msgstr ""
+
+#: matiz/app.py:466
+msgid "Colors"
+msgstr ""
+
+#: matiz/app.py:468
+msgid "Panes"
+msgstr ""
+
+#: matiz/app.py:470
+msgid "Go to neighboring pane"
+msgstr ""
+
+#: matiz/app.py:472
+msgid "Folder and scrollback"
+msgstr ""
+
+#: matiz/app.py:473
+msgid "Show/hide file tree"
+msgstr ""
+
+#: matiz/app.py:474
+msgid "Open folder in file manager"
+msgstr ""
+
+#: matiz/app.py:476
+msgid "Search in terminal"
+msgstr ""
+
+#: matiz/app.py:477
+msgid "Save scrollback to file"
+msgstr ""
+
+#. Translators: section title in the keyboard shortcuts dialog
+#: matiz/app.py:481
+msgid "Terminal"
+msgstr ""
+
+#: matiz/app.py:482
+msgid "Copy / paste"
+msgstr ""
+
+#: matiz/app.py:483
+msgid "Zoom"
+msgstr ""
+
+#: matiz/app.py:493
+msgid "Mouse"
+msgstr ""
+
+#: matiz/app.py:494
+msgid "Open link or file:line (Ctrl+click)"
+msgstr ""
+
+#: matiz/app.py:495
+msgid "Tab menu: right-click the tab title"
+msgstr ""
+
+#: matiz/app.py:544
+msgid "No application to open folders"
+msgstr ""
+
+#. Translators: {name} is a folder name, {app} an application name
+#: matiz/app.py:550
+#, python-brace-format
+msgid "Opening {name} with {app}"
+msgstr ""
+
+#: matiz/app.py:553
+#, python-brace-format
+msgid "Failed to open: {error}"
+msgstr ""
+
+#: matiz/app.py:576 matiz/filetree.py:261
+#, python-brace-format
+msgid "Copied: {path}"
+msgstr ""
+
+#: matiz/app.py:587
+msgid "Save scrollback"
+msgstr ""
+
+#: matiz/app.py:599
+#, python-brace-format
+msgid "Scrollback saved to {file}"
+msgstr ""
+
+#: matiz/app.py:601
+#, python-brace-format
+msgid "Failed to save: {error}"
+msgstr ""
+
+#. Translators: {file} is a file name, {line} a line number
+#: matiz/app.py:623
+#, python-brace-format
+msgid "Opening {file}:{line}"
+msgstr ""
+
+#: matiz/app.py:625
+#, python-brace-format
+msgid "Opening {file}"
+msgstr ""
+
+#: matiz/app.py:628
+#, python-brace-format
+msgid "Failed to open editor: {error}"
+msgstr ""
+
+#. Translators: notification title; {command} is the command that finished
+#: matiz/app.py:666
+#, python-brace-format
+msgid "Finished: {command}"
+msgstr ""
+
+#: matiz/app.py:667 matiz/app.py:672
+#, python-brace-format
+msgid "{tab} · {duration}"
+msgstr ""
+
+#: matiz/app.py:670
+msgid "Claude finished responding"
+msgstr ""
+
+#: matiz/app.py:670
+msgid "Claude needs you"
+msgstr ""
+
+#: matiz/app.py:679
+msgid "Terminal bell"
+msgstr ""
+
+#: matiz/app.py:696
+msgid "Search in terminal…"
+msgstr ""
+
+#: matiz/app.py:697
+msgid "Previous (Enter)"
+msgstr ""
+
+#: matiz/app.py:698
+msgid "Next (Shift+Enter)"
+msgstr ""
+
+#: matiz/app.py:857
+#, python-brace-format
+msgid "{n} tab"
+msgid_plural "{n} tabs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: matiz/app.py:859
+#, python-brace-format
+msgid "{n} pane"
+msgid_plural "{n} panes"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Translators: duration in seconds
+#: matiz/app.py:1017
+#, python-brace-format
+msgid "{s}s"
+msgstr ""
+
+#. Translators: duration in minutes and seconds
+#: matiz/app.py:1021
+#, python-brace-format
+msgid "{m}m {s:02d}s"
+msgstr ""
+
+#. Translators: duration in hours and minutes
+#: matiz/app.py:1024
+#, python-brace-format
+msgid "{h}h {m:02d}m"
+msgstr ""
+
+#. Translators: plan limit window names (5-hour window, weekly window…)
+#. Translators: very short names for the 5-hour and weekly limits in the header bar
+#: matiz/claude_limits.py:34 matiz/usage_ui.py:132
+msgid "5h"
+msgstr ""
+
+#: matiz/claude_limits.py:34 matiz/usage.py:301
+msgid "Weekly"
+msgstr ""
+
+#: matiz/claude_limits.py:34
+msgid "Weekly (Opus)"
+msgstr ""
+
+#: matiz/claude_limits.py:35
+msgid "Weekly (Sonnet)"
+msgstr ""
+
+#: matiz/claude_limits.py:35
+msgid "Weekly (apps)"
+msgstr ""
+
+#: matiz/filetree.py:65
+msgid "Up one level"
+msgstr ""
+
+#: matiz/filetree.py:66
+msgid "Show hidden files"
+msgstr ""
+
+#: matiz/filetree.py:68
+msgid "Follow the terminal directory"
+msgstr ""
+
+#: matiz/filetree.py:191
+msgid "Open"
+msgstr ""
+
+#: matiz/filetree.py:192 matiz/filetree.py:202
+msgid "Insert path in terminal"
+msgstr ""
+
+#: matiz/filetree.py:195 matiz/filetree.py:208
+msgid "Copy path"
+msgstr ""
+
+#: matiz/filetree.py:196
+msgid "Show in folder"
+msgstr ""
+
+#: matiz/filetree.py:201
+msgid "Go to this folder in the terminal (cd)"
+msgstr ""
+
+#: matiz/filetree.py:204
+msgid "Use as tree root"
+msgstr ""
+
+#: matiz/filetree.py:207
+msgid "Open in file manager"
+msgstr ""
+
+#. Translators: {program} is the running program; quoted text is a menu item
+#: matiz/filetree.py:245
+#, python-brace-format
+msgid "A program is running ({program}); use “New tab in this folder”"
+msgstr ""
+
+#: matiz/pane.py:141
+msgid "Close pane (Ctrl+Shift+W)"
+msgstr ""
+
+#. Translators: tab title while Claude Code runs; {dir} is the folder name
+#: matiz/pane.py:163
+#, python-brace-format
+msgid "Claude · {dir}"
+msgstr ""
+
+#. Translators: tab title; {program} is the running program, {dir} the folder name
+#: matiz/pane.py:166
+#, python-brace-format
+msgid "{program} · {dir}"
+msgstr ""
+
+#. Translators: tab title when the shell is in the home folder
+#: matiz/pane.py:168
+msgid "Home"
+msgstr ""
+
+#: matiz/pane.py:333
+#, python-brace-format
+msgid "matiz-daemon: {error}"
+msgstr ""
+
+#: matiz/pane.py:352
+msgid "lost connection to matiz-daemon; recreating the session"
+msgstr ""
+
+#. Translators: strftime format
+#: matiz/pane.py:409
+msgid "%Y-%m-%d %H:%M"
+msgstr ""
+
+#. Translators: banner shown above the restored scrollback; {when} is a date/time
+#: matiz/pane.py:411
+#, python-brace-format
+msgid "session restored ({when})"
+msgstr ""
+
+#: matiz/pane.py:418
+#, python-brace-format
+msgid "Failed to start the shell: {error}"
+msgstr ""
+
+#. Translators: tab title when the tab is split; {title} is the active pane title,
+#. {n} how many other panes there are
+#: matiz/tab.py:253
+#, python-brace-format
+msgid "{title}  (+{n})"
+msgstr ""
+
+#: matiz/usage.py:221
+msgid "Plan limits do not apply to this login (API key, Bedrock or Vertex)."
+msgstr ""
+
+#: matiz/usage.py:242
+#, python-brace-format
+msgid "Could not read the database: {error}"
+msgstr ""
+
+#: matiz/usage.py:301
+msgid "Short window"
+msgstr ""
+
+#: matiz/usage.py:336
+#, python-brace-format
+msgid "Read error: {error}"
+msgstr ""
+
+#. Translators: billions of tokens, e.g. "1.9B"; {n} is already formatted
+#: matiz/usage.py:364
+#, python-brace-format
+msgid "{n}B"
+msgstr ""
+
+#. Translators: millions of tokens, e.g. "3.4M"; {n} is already formatted
+#: matiz/usage.py:367
+#, python-brace-format
+msgid "{n}M"
+msgstr ""
+
+#. Translators: thousands of tokens, e.g. "1.2k"; {n} is already formatted
+#: matiz/usage.py:370
+#, python-brace-format
+msgid "{n}k"
+msgstr ""
+
+#: matiz/usage_ui.py:45
+msgid "never"
+msgstr ""
+
+#: matiz/usage_ui.py:48
+msgid "just now"
+msgstr ""
+
+#: matiz/usage_ui.py:51
+#, python-brace-format
+msgid "{n} minute ago"
+msgid_plural "{n} minutes ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: matiz/usage_ui.py:54
+#, python-brace-format
+msgid "{n} hour ago"
+msgid_plural "{n} hours ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Translators: strftime format for a past date, e.g. "on 2026-09-28"
+#: matiz/usage_ui.py:56
+msgid "on %Y-%m-%d"
+msgstr ""
+
+#. Translators: limit window of N hours, e.g. "5h"
+#: matiz/usage_ui.py:64
+#, python-brace-format
+msgid "{n}h"
+msgstr ""
+
+#. Translators: limit window of N days, e.g. "3d"
+#: matiz/usage_ui.py:68
+#, python-brace-format
+msgid "{n}d"
+msgstr ""
+
+#: matiz/usage_ui.py:74
+msgid "AI usage (Claude Code, OpenCode, Codex…)"
+msgstr ""
+
+#. Translators: short label of the AI usage button in the header bar
+#: matiz/usage_ui.py:82 matiz/usage_ui.py:126
+msgid "AI"
+msgstr ""
+
+#: matiz/usage_ui.py:89
+msgid "Loading…"
+msgstr ""
+
+#: matiz/usage_ui.py:132
+msgid "7d"
+msgstr ""
+
+#: matiz/usage_ui.py:133
+#, python-brace-format
+msgid "{name} {pct}%"
+msgstr ""
+
+#: matiz/usage_ui.py:149
+#, python-brace-format
+msgid "{tool}: {n} open session"
+msgid_plural "{tool}: {n} open sessions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: matiz/usage_ui.py:152
+#, python-brace-format
+msgid "{sessions}, {n} working"
+msgstr ""
+
+#: matiz/usage_ui.py:154
+msgid "AI usage — click for details"
+msgstr ""
+
+#: matiz/usage_ui.py:163
+msgid "No AI tools found."
+msgstr ""
+
+#. Translators: strftime format for the time of the last refresh
+#: matiz/usage_ui.py:168
+msgid "%H:%M:%S"
+msgstr ""
+
+#: matiz/usage_ui.py:169
+#, python-brace-format
+msgid "Updated at {time} · data read from disk, nothing is sent"
+msgstr ""
+
+#: matiz/usage_ui.py:171
+msgid "Refresh"
+msgstr ""
+
+#: matiz/usage_ui.py:187
+#, python-brace-format
+msgid "{n} open"
+msgid_plural "{n} open"
+msgstr[0] ""
+msgstr[1] ""
+
+#: matiz/usage_ui.py:189
+#, python-brace-format
+msgid "{open} · {n} working"
+msgstr ""
+
+#: matiz/usage_ui.py:191
+msgid "not installed"
+msgstr ""
+
+#: matiz/usage_ui.py:193
+#, python-brace-format
+msgid "last used {when}"
+msgstr ""
+
+#: matiz/usage_ui.py:200
+msgid "No usage in the last 7 days."
+msgstr ""
+
+#: matiz/usage_ui.py:207
+#, python-brace-format
+msgid "Models (7 days): {models}"
+msgstr ""
+
+#. Translators: {name} is a limit window name such as "5h" or "Weekly"
+#: matiz/usage_ui.py:215
+#, python-brace-format
+msgid "{name} limit"
+msgstr ""
+
+#: matiz/usage_ui.py:223
+msgid "%b %d %H:%M"
+msgstr ""
+
+#. Translators: strftime format for when a limit resets
+#: matiz/usage_ui.py:223
+#, python-brace-format
+msgid "{pct} · resets {when}"
+msgstr ""
+
+#: matiz/usage_ui.py:231
+#, python-brace-format
+msgid "Limits updated {when} (on every agent reply)"
+msgstr ""
+
+#: matiz/usage_ui.py:245
+msgid "Not installed"
+msgstr ""
+
+#: matiz/usage_ui.py:245
+#, python-brace-format
+msgid "To install: {command}"
+msgstr ""
+
+#: matiz/usage_ui.py:250
+msgid "Login: —"
+msgstr ""
+
+#: matiz/usage_ui.py:253
+#, python-brace-format
+msgid "✓ Logged in · {plan} plan"
+msgstr ""
+
+#: matiz/usage_ui.py:255
+msgid "✓ Logged in"
+msgstr ""
+
+#: matiz/usage_ui.py:258
+msgid "Not logged in"
+msgstr ""
+
+#: matiz/usage_ui.py:260
+msgid "Log in"
+msgstr ""
+
+#: matiz/usage_ui.py:260
+msgid "Switch account"
+msgstr ""
+
+#: matiz/usage_ui.py:278
+msgid "Plan limits: shown after Claude's next reply."
+msgstr ""
+
+#: matiz/usage_ui.py:280
+msgid "Disable"
+msgstr ""
+
+#: matiz/usage_ui.py:286
+msgid ""
+"Plan limits (5h / weekly) disabled — Orca may have rewritten the setting."
+msgstr ""
+
+#: matiz/usage_ui.py:287
+msgid "Show plan limits (5h / weekly)"
+msgstr ""
+
+#: matiz/usage_ui.py:289 matiz/usage_ui.py:306
+msgid "Enable"
+msgstr ""
+
+#: matiz/usage_ui.py:299
+msgid "Show Claude plan limits?"
+msgstr ""
+
+#: matiz/usage_ui.py:300
+msgid ""
+"Claude Code reports its plan limits (5h and weekly) to the status line "
+"command. Matiz will install a wrapper there that records the numbers and "
+"passes everything on to your current status line (Orca's keeps working).\n"
+"\n"
+"This changes ~/.claude/settings.json (backed up to settings.json.matiz-bak). "
+"No password or token is read. You can disable it at any time."
+msgstr ""
+
+#: matiz/usage_ui.py:322
+msgid "7 days"
+msgstr ""
+
+#: matiz/usage_ui.py:322
+msgid "Last 5h"
+msgstr ""
+
+#: matiz/usage_ui.py:322
+msgid "Today"
+msgstr ""
+
+#: matiz/usage_ui.py:326
+msgid "Messages"
+msgstr ""
+
+#: matiz/usage_ui.py:327
+msgid "Output tokens"
+msgstr ""
+
+#: matiz/usage_ui.py:328
+msgid "Input"
+msgstr ""
+
+#: matiz/usage_ui.py:329
+msgid "Cache reads"
+msgstr ""
+
+#: matiz/usage_ui.py:333
+#, python-brace-format
+msgid "${amount}"
+msgstr ""
+
+#. Translators: cost in US dollars; {amount} is already formatted (e.g. "1.25")
+#: matiz/usage_ui.py:333
+msgid "Cost"
+msgstr ""
+
+#. Translators: tooltip of an hourly usage bar, e.g. "14h: 1.2M tokens"
+#: matiz/usage_ui.py:356
+#, python-brace-format
+msgid "{hour}h: {tokens} tokens"
+msgstr ""
+
+#: matiz/usage_ui.py:360
+msgid "24 h ago"
+msgstr ""
+
+#: matiz/usage_ui.py:361
+msgid "now"
+msgstr ""
